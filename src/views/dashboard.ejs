@@ -1,0 +1,45 @@
+<div class="container">
+    <div class="row my-5 py-2 align-items-center">
+        <div class="col-3">
+            <div class="fw-bold mb-0 fs-1 text-primary">TMS</div>            
+        </div>
+
+        <div class="col-9">
+            <div class="d-flex justify-content-end align-items-center gap-5">               
+
+                <? if(user.role === 'user'){ ?>
+                <button class="btn btn-bd-outline-primary px-5 create-task">Create Task</button>
+                <? } ?>
+
+                <span class="text-secondary">
+                    <?= user.email ?>
+                </span>
+
+                <div class="dropdown">
+                    <div class="d-flex justify-content-center align-items-center dropdown-toggle"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="fs-2 user-avatar rounded-circle d-flex justify-content-center align-items-center"
+                            style="width: 34px; height: 34px; font-size: 0.9rem;">
+                            <i class="bi bi-person-fill"></i>
+                        </span>
+                    </div>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/auth/profile">Profile</a></li>
+                        <li><a class="dropdown-item" href="/auth/settings">Settings</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="dataTable table-responsive max-vh-80" id="dataTable"></div>
+
+</div>
+
+<script type="module" src="/js/dashboard.js"></script>

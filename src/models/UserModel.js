@@ -115,6 +115,7 @@ class User {
     const payload = {
       user: {
         id: user.id,
+        email: user.email,        
         role: user.user_role
       }
     };

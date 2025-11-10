@@ -2,6 +2,7 @@
 import express from 'express';
 import authMiddleware from '../middleware/authMiddleware.js';
 import { registerUser, loginUser } from '../controllers/authController.js';
+import { advanceMysqlQuery, runSelect } from '../controllers/controller.js';
 
 const router = express.Router();
 
@@ -14,8 +15,24 @@ router.get('/admin/register', (req, res) => res.render('register', { title: 'Reg
 router.post('/login', loginUser);
 router.post('/register', registerUser);
 
-router.use('/auth', authMiddleware);
+// Logout route
+router.get('/logout', (req, res) => {
+    // Clear the cookie that holds the token
+    res.clearCookie('tms_token', {
+        httpOnly: true,
+        sameSite: 'lax'
+    });
 
-router.get('/auth/dashboard', (req, res)=>res.render('dashboard', { title: 'Dashboard' }));
+    // Redirect user back to login page
+    return res.redirect('/login');
+});
+
+router.use('/auth', authMiddleware);
+router.get('/auth/dashboard', (req, res) => res.render('dashboard', { title: 'Dashboard', user: req.user }));
+
+router.post('/auth/query/select', runSelect);
+router.post('/auth/advance/query', advanceMysqlQuery);
+
+
 
 export default router;

@@ -28,6 +28,7 @@
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-ejs-layouts": "^2.5.1",
     "fs-extra": "^11.3.2",
@@ -36,6 +37,10 @@
     "multer": "^2.0.2",
     "mysql2": "^3.15.3",
     "nanoid": "^5.1.6",
+    "node-sql-parser": "^5.3.13",
     "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }

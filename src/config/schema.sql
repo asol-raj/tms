@@ -1,12 +1,12 @@
--- Active: 1758704013034@@127.0.0.1@3306@taskmgmt
+-- Active: 1758133010005@@127.0.0.1@3306@taskmgmt
 
--- CREATE DATABASE IF NOT EXISTS taskmgmt;
--- USE taskmgmt;
+CREATE DATABASE IF NOT EXISTS taskmgmt;
+USE taskmgmt;
 
--- CREATE USER IF NOT EXISTS 'user_tms' @'%' IDENTIFIED BY '269608Raj$';
+CREATE USER IF NOT EXISTS 'user_tms' @'%' IDENTIFIED BY '269608Raj$';
 -- DROP USER IF EXISTS 'user_tms'@'%';
 
--- GRANT ALL PRIVILEGES ON taskmgmt.* TO 'user_tms' @'%' WITH GRANT OPTION;
+GRANT ALL PRIVILEGES ON taskmgmt.* TO 'user_tms' @'%' WITH GRANT OPTION;
 -- REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'user_tms'@'%';
 
 CREATE TABLE IF NOT EXISTS `users` (
@@ -35,7 +35,25 @@ CREATE TABLE IF NOT EXISTS `user_profile` (
     `state` VARCHAR(100) NULL,
     `zipcode` VARCHAR(20) NULL,
     `profile_image_url` VARCHAR(512) NULL,
-    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,    
     `updated_at` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,    
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 );
+
+-- Tasks Table
+CREATE TABLE `tasks` (
+    `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,    
+    `task_id` CHAR(36) NOT NULL UNIQUE DEFAULT (UUID()),  
+    `title` VARCHAR(255) NOT NULL,
+    `description` TEXT DEFAULT NULL,
+    `priority` ENUM('low', 'medium', 'high') NOT NULL DEFAULT 'medium',
+    `status` ENUM('pending', 'in_progress', 'completed', 'archived') NOT NULL DEFAULT 'pending',
+    `remarks` TEXT DEFAULT NULL,
+    `created_by` BIGINT UNSIGNED NOT NULL,
+    `assigned_to` BIGINT UNSIGNED NOT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP, 
+    CONSTRAINT fk_task_creator FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    CONSTRAINT fk_task_assignee FOREIGN KEY (`assigned_to`) REFERENCES `users`(`id`) ON DELETE CASCADE
+);
+
