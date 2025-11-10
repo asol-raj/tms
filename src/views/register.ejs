@@ -1,0 +1,161 @@
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="row border rounded-5 p-3 bg-white shadow box-area">
+
+        <div class="col-md-6 rounded-4 d-flex justify-content-center align-items-center flex-column left-box"
+            style="background: #10375C;">
+            <div class="featured-image mb-3 text-center">
+                <img src="/img/Signup.png" class="img-fluid" style="width: 250px;" alt="Logo">
+            </div>
+            <p class="text-white fs-2" style="font-family: 'Poppins', sans-serif; font-weight: 600;">Join Us</p>
+            <small class="text-white text-wrap text-center"
+                style="width: 17rem;font-family: 'Poppins', sans-serif;">Create your account and start managing tasks
+                today!</small>
+        </div>
+
+        <div class="col-md-6 right-box">
+            <div class="row align-items-center">
+                <div class="header-text mb-4">
+                    <h2>Get Started</h2>
+                    <p>Create your account in a few simple steps.</p>
+                </div>
+
+                <form id="registerForm">
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control form-control-lg bg-light fs-6"
+                            placeholder="Username (Optional)" id="username" name="username">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control form-control-lg bg-light fs-6"
+                            placeholder="First Name (Optional)" id="firstName" name="firstName">
+                    </div>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control form-control-lg bg-light fs-6"
+                            placeholder="Last Name (Optional)" id="lastName" name="lastName">
+                    </div>
+                    <div class="input-group mb-3">
+                        <input type="email" class="form-control form-control-lg bg-light fs-6"
+                            placeholder="Email address" id="email" name="email" required>
+                    </div>
+                    <div class="input-group mb-3">
+                        <input type="password" class="form-control form-control-lg bg-light fs-6" placeholder="Password"
+                            id="password" name="password" required>
+                    </div>
+                    <div class="input-group mb-4">
+                        <input type="password" class="form-control form-control-lg bg-light fs-6"
+                            placeholder="Confirm Password" id="confirmPassword" name="confirmPassword" required>
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <button type="submit" class="btn btn-lg btn-success w-100 fs-6">Register</button>
+                    </div>
+                    <div class="row">
+                        <small>Already have an account? <a href="/login" class="text-decoration-none">Login</a></small>
+                    </div>
+                </form>
+                <div id="errorMessage" class="alert alert-danger mt-3 d-none" role="alert">
+                </div>
+                <div id="successMessage" class="alert alert-success mt-3 d-none" role="alert">
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Optional: Custom styles for the register page (can be shared with login.ejs) */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap');
+
+    .box-area {
+        width: 930px;
+    }
+
+    .right-box {
+        padding: 40px 30px 40px 30px;
+    }
+
+    ::placeholder {
+        font-size: 15px;
+    }
+
+    .left-box {
+        background: #10375C;
+        padding: 40px;
+    }
+
+    .featured-image {
+        width: 100%;
+        /* Adjust as needed */
+    }
+
+    .min-vh-100 {
+        min-height: 100vh;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const registerForm = document.getElementById('registerForm');
+        const errorMessageDiv = document.getElementById('errorMessage');
+        const successMessageDiv = document.getElementById('successMessage');
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Prevent default form submission
+
+            errorMessageDiv.classList.add('d-none'); // Hide previous errors
+            successMessageDiv.classList.add('d-none'); // Hide previous success messages
+
+            const username = document.getElementById('username').value;
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Client-side password confirmation
+            if (password !== confirmPassword) {
+                errorMessageDiv.textContent = 'Passwords do not match.';
+                errorMessageDiv.classList.remove('d-none');
+                return; // Stop submission
+            }
+
+            try {
+                const response = await fetch('/register', { // Your registration API endpoint
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username || null, // Send null if empty
+                        firstName: firstName || null,
+                        lastName: lastName || null,
+                        email,
+                        password
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Registration successful
+                    successMessageDiv.textContent = data.message || 'Registration successful! You can now log in.';
+                    successMessageDiv.classList.remove('d-none');
+                    registerForm.reset(); // Clear the form
+                    // Optional: Redirect to login page after a delay
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 3000);
+                } else {
+                    // Registration failed
+                    errorMessageDiv.textContent = data.message || 'Registration failed. Please try again.';
+                    errorMessageDiv.classList.remove('d-none');
+                }
+            } catch (error) {
+                console.error('Network error or unexpected error:', error);
+                errorMessageDiv.textContent = 'An unexpected error occurred. Please try again later.';
+                errorMessageDiv.classList.remove('d-none');
+            }
+        });
+    });
+</script>

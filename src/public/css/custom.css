@@ -1,0 +1,162 @@
+/* Styles for the single, global flyout menu */
+.status-flyout-menu {
+    position: absolute;
+    display: none;
+    z-index: 1099;
+    background-color: white;
+    border: 1px solid #aaa;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    min-width: 150px;
+    padding: 4px 0;
+    box-sizing: border-box;
+}
+
+.status-flyout-option {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.status-flyout-option:hover {
+    background-color: #eef4ff;
+}
+
+.status-flyout-option.selected {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+/* This is the class your function will look for */
+.editable-cell {
+    cursor: pointer;
+    user-select: none;
+}
+
+.editable-cell:hover {
+    background-color: #f9f9f9;
+}
+
+/* Styles for the single, global flyout menu end */
+
+/* Styles for the new date picker flyout */
+.date-picker-flyout {
+    position: absolute;
+    display: none;
+    z-index: 1000;
+    background-color: white;
+    border: 1px solid #aaa;
+    box-shadow: 0 4px 10px rgba(15, 99, 255, 0.539);
+    border-radius: 4px;
+}
+
+/* Style the date input to look clean inside the flyout */
+.date-picker-flyout input[type="date"] {
+    padding: 7px;
+    border: none;
+    font-family: sans-serif;
+    font-size: 1em;
+}
+
+/* Styles for the new date picker flyout end */
+
+/*
+ * 1. Animation for the spinner
+ * This @keyframes rule defines the 'spin' animation
+ */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/*
+ * 2. The Loading State
+ * - Dims the text.
+ * - Adds a "::before" pseudo-element.
+ * - Styles that pseudo-element as a spinner.
+ */
+.is-loading {
+    /* Dim the cell text to show it's in a pending state */
+    color: #888;
+}
+
+.is-loading::before {
+    /* Creates the spinner element */
+    content: '';
+    display: inline-block;
+
+    /* Sizing */
+    width: 0.9em;
+    height: 0.9em;
+    margin-right: 6px;
+    vertical-align: text-bottom;
+
+    /* The spinner look */
+    border: 2px solid #f3f3f3;
+    /* Light grey track */
+    border-top-color: #888;
+    /* The spinning part's color */
+    border-radius: 50%;
+
+    /* Apply the animation */
+    animation: spin 1s linear infinite;
+}
+
+/*
+ * 3. The Error State
+ * - Gives a clear "danger" look.
+ * - Uses a light red background and dark red text.
+ */
+.is-error {
+    background-color: #ffe8e6;
+    color: #c00;
+    font-weight: bold;
+}
+
+
+
+/* success flash (you probably already have .flash-green) */
+.flash-green {
+    animation: flashGreen 0.6s;
+}
+
+@keyframes flashGreen {
+    0% {
+        background-color: rgba(220, 255, 161, 1);
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
+.flash-red {
+    animation: flashRed 0.6s;
+}
+
+@keyframes flashRed {
+    0% {
+        background-color: rgba(255, 200, 200, 1);
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
+.inline-error {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 6px;
+    font-size: 11px;
+    line-height: 1;
+    border-radius: 4px;
+    background: rgba(255, 230, 230, 0.98);
+    color: #8b0000;
+    border: 1px solid rgba(200, 0, 0, 0.12);
+    vertical-align: middle;
+}
