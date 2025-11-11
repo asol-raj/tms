@@ -217,5 +217,26 @@ export const advanceMysqlQuery = async (req, res) => {
   }
 };
 
+export async function inlineUpdateController(req, res){
+  try {
+    let { table, field, value=null, idkey='id', id } = req.body; 
+    if(!table || !field || !id ) throw ('All fields are required!');
+    const sql = `UPDATE ${table} SET ${field} = ? WHERE ${idkey}=?;`;
+    let rsp = await runMysql(sql, [value, id]);
+    res.json({ status: true, data: rsp });
+  } catch (error) {
+    console.log(error);
+    return res.json({ status: false, error })
+  }
+}
+
+export async function getUserRole(req, res){
+  try {
+    let userrole = req.user.role;
+    res.json(userrole);
+  } catch (error) {
+    res.json('user');
+  }
+}
 
 

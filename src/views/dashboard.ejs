@@ -1,18 +1,18 @@
 <div class="container">
-    <div class="row my-5 py-2 align-items-center">
-        <div class="col-3">
-            <div class="fw-bold mb-0 fs-1 text-primary">TMS</div>            
+    <div class="row mt-2 py-2 align-items-center">
+        <div class="col-12 col-lg-3 mb-3 mb-lg-0">
+            <div class="fw-bold mb-0 fs-1 text-primary">TMS</div>
         </div>
 
-        <div class="col-9">
-            <div class="d-flex justify-content-end align-items-center gap-5">               
+        <div class="col-12 col-lg-9">
+            <div class="d-flex justify-content-end align-items-center gap-5">
 
-                <? if(user.role === 'user'){ ?>
-                <button class="btn btn-bd-outline-primary px-5 create-task">Create Task</button>
+                <? if(user.role === 'admin'){ ?>
+                <button class="btn btn-bd-primary px-5 create-task border-2 me-auto me-lg-0">Create Task</button>
                 <? } ?>
 
                 <span class="text-secondary">
-                    <?= user.email ?>
+                    <?= user.fullname ?>
                 </span>
 
                 <div class="dropdown">
@@ -27,6 +27,9 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="/auth/profile">Profile</a></li>
                         <li><a class="dropdown-item" href="/auth/settings">Settings</a></li>
+                        <? if(user.role === 'admin'){ ?>
+                        <li><a class="dropdown-item" href="/admin/register">Register</a></li>
+                        <? } ?>
                         <li>
                             <hr class="dropdown-divider">
                         </li>
@@ -38,8 +41,93 @@
         </div>
     </div>
 
+    <div class="my-4 d-flex flex-wrap justify-content-between align-items-center gap-5 filter-buttons" id="actionBtn">
+        <button class="btn btn-success px-5 border-2 me-auto filter-btn fw-semibold all">All</button>
+        <button class="btn btn-outline-info px-5 border-2 filter-btn fw-semibold pending">Pending</button>
+        <button class="btn btn-outline-primary px-5 border-2 filter-btn fw-semibold in_progress">In Progress</button>
+        <button class="btn btn-outline-success px-5 border-2 filter-btn fw-semibold completed">Completed</button>
+        <button class="btn btn-outline-danger px-5 border-2 filter-btn fw-semibold archived">Archived</button>
+    </div>
+
     <div class="dataTable table-responsive max-vh-80" id="dataTable"></div>
 
+
+    <!-- <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm" novalidate="" class="needs-validation"><input type="hidden" id="created_by"
+                        name="created_by"><input type="hidden" id="id" name="id">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="mb-2 title"><label class="form-label" for="title">Title<span
+                                        class="text-danger ms-1">*</span></label><input class="form-control" type="text"
+                                    id="title" name="title" required="">
+                                <div class="invalid-feedback">Please provide a valid value.</div>
+                            </div>
+                            <div class="mb-2 description"><label class="form-label" for="description">Description<span
+                                        class="text-danger ms-1">*</span></label><textarea class="form-control" rows="3"
+                                    required="" name="description"></textarea>
+                                <div class="invalid-feedback">Please provide a valid value.</div>
+                            </div>
+                            <div class="mb-2 priority">
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="form-check"><input class="form-check-input" type="radio" name="priority"
+                                            id="priority_0" value="low" required=""><label class="form-check-label"
+                                            for="priority_0">Low</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="radio" name="priority"
+                                            id="priority_1" value="medium"><label class="form-check-label"
+                                            for="priority_1">Medium</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="radio" name="priority"
+                                            id="priority_2" value="high"><label class="form-check-label"
+                                            for="priority_2">High</label></div>
+                                </div>
+                                <div class="invalid-feedback">Please provide a valid value.</div>
+                            </div>
+                            <div class="mb-2 status">
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="form-check"><input class="form-check-input" type="radio" name="status"
+                                            id="status_0" value="pending" required=""><label class="form-check-label"
+                                            for="status_0">Pending</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="radio" name="status"
+                                            id="status_1" value="in_progress"><label class="form-check-label"
+                                            for="status_1">In Progress</label></div>
+                                    <div class="form-check"><input class="form-check-input" type="radio" name="status"
+                                            id="status_2" value="completed"><label class="form-check-label"
+                                            for="status_2">Completed</label></div>
+                                </div>
+                                <div class="invalid-feedback">Please provide a valid value.</div>
+                            </div>
+                            <div class="mb-2 assigned_to"><label class="form-label" for="assigned_to">Assigned To<span
+                                        class="text-danger ms-1">*</span></label><select class="form-select" required=""
+                                    name="assigned_to">
+                                    <option value="1">Raj Shekhar Singh</option>
+                                </select>
+                                <div class="invalid-feedback">Please provide a valid value.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-muted small">Fields marked with * are required.</div>
+                    <div class="row mt-3">
+                        <div class="col-12 d-flex gap-2 justify-content-end"><button class="btn btn-primary"
+                                type="submit">Submit</button></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div> -->
 </div>
 
+<style>
+    /* .filter-buttons .filter-btn.active {
+        transform: scale(1.05);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        transition: all 0.15s ease-in-out;
+    } */
+</style>
+
+<script src="/_libs/flatpickr.js"></script>
 <script type="module" src="/js/dashboard.js"></script>

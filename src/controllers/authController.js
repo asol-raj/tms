@@ -8,7 +8,7 @@ import User from '../models/UserModel.js'; // Adjust the path if needed
 export const registerUser = async (req, res) => {
     try {
         // 1. Get user data from the request body
-        const { email, password, username, firstName, lastName } = req.body;
+        const { email, password, username, fullname, userrole } = req.body;
 
         // 2. Simple Validation: Check for required fields
         if (!email || !password) {
@@ -24,8 +24,8 @@ export const registerUser = async (req, res) => {
             email,
             password,
             username: username || null, // Pass null if username is empty/undefined
-            firstName: firstName || null,
-            lastName: lastName || null
+            fullname: fullname || null,
+            userrole: userrole || 'user',
         });
 
         // 4. Send a success response
@@ -68,7 +68,7 @@ export const loginUser = async (req, res) => {
         // 3. Call the model to log in
         // The User.login method will find the user, compare the password,
         // and return a JWT if successful.
-        const token = await User.login(email, password); //log(token);
+        const token = await User.login(email, password);
         res.cookie('tms_token', token, { httpOnly: true, maxAge: 30 * 86400000 });
         // 4. Send the token back to the client
         res.status(200).json({

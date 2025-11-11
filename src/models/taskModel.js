@@ -29,15 +29,14 @@ const Task = {
         const {
             title,
             created_by,
-            assigned_to,
+            assigned_to = null,
             description = null,
             priority = 'medium',
-            status = 'pending',
-            remarks = null
+            status = 'pending'
         } = taskData;
 
         // Check for required fields
-        if (!title || !created_by || !assigned_to) {
+        if (!title || !created_by) {
             throw new Error('Missing required fields: title, created_by, and assigned_to are required.');
         }
 
@@ -46,7 +45,7 @@ const Task = {
                 (title, description, priority, status, created_by, assigned_to)
             VALUES (?, ?, ?, ?, ?, ?)
         `;
-        const params = [title, description, priority, status, created_by, assigned_to];
+        const params = [title, description, priority, status, created_by, assigned_to || null];
 
         try {
             const [result] = await pool.query(sql, params);
@@ -108,42 +107,57 @@ const Task = {
      * @returns {Promise<Array<object>>} An array of task objects.
      */
     async findAll(filters = {}) {
-        let sql = 'SELECT * FROM tasks';
+        let sql = `
+        SELECT 
+            t.id,
+            DATE_FORMAT(t.created_at, '%m-%d-%Y, %r') AS dated,
+            t.priority,
+            t.title,
+            t.description,
+            t.status,
+            u.fullname AS created_by,
+            a.fullname AS assigned_to,
+            t.remarks,
+            t.comments
+        FROM tasks t
+        JOIN users u ON u.id = t.created_by
+        LEFT JOIN users a ON a.id = t.assigned_to
+    `;
+
         const params = [];
         const conditions = [];
 
-        // Add filters
+        // Apply filters dynamically
         if (filters.assigned_to) {
-            conditions.push('assigned_to = ?');
+            conditions.push('t.assigned_to = ?');
             params.push(filters.assigned_to);
         }
+
         if (filters.created_by) {
-            conditions.push('created_by = ?');
+            conditions.push('t.created_by = ?');
             params.push(filters.created_by);
         }
+
         if (filters.priority) {
-            conditions.push('priority = ?');
+            conditions.push('t.priority = ?');
             params.push(filters.priority);
         }
 
-        // Handle status filtering
         if (filters.status) {
-            // If a specific status is requested, use it
-            conditions.push('status = ?');
+            conditions.push('t.status = ?');
             params.push(filters.status);
         } else if (!filters.includeArchived) {
-            // Default behavior: exclude archived tasks
-            conditions.push("status != 'archived'");
+            // default: exclude archived
+            conditions.push("t.status != 'archived'");
         }
-        // If filters.includeArchived is true and no status is set, no status condition is added.
 
-        // Build the WHERE clause
+        // Build WHERE clause if filters exist
         if (conditions.length > 0) {
             sql += ' WHERE ' + conditions.join(' AND ');
         }
 
-        // Add default sorting
-        sql += ' ORDER BY created_at DESC';
+        // Default sorting and limit
+        sql += ' ORDER BY t.id DESC LIMIT 100';
 
         try {
             const [rows] = await pool.query(sql, params);
@@ -153,6 +167,8 @@ const Task = {
             throw error;
         }
     },
+
+    
 
     /**
      * Updates a task by its public `task_id` (UUID).

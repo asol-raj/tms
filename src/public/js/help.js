@@ -6,10 +6,35 @@ export const log = console.log;
 export const jq = jQuery;
 export const axios = window.axios;
 
-
-
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
 const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
+/**
+ * Converts a string to title case.
+ *
+ * This function capitalizes the first letter of each word in the string
+ * and makes the rest of the word lowercase. Words are assumed to be
+ * separated by single spaces.
+ *
+ * @param {string | null | undefined} str The input string to convert.
+ * @returns {string} The title-cased string.
+ */
+export function toTitleCase(str) {
+  // Handle null, undefined, or empty strings gracefully
+  if (!str) {
+    return "";
+  }
+
+  return str
+    .toLowerCase() // Convert the entire string to lowercase first to handle mixed cases
+    .split(' ')    // Split the string into an array of words
+    .map(word => {
+      // For each word, capitalize the first letter and append the rest of the word
+      // Handle empty strings that might result from multiple spaces
+      return word.length > 0 ? word.charAt(0).toUpperCase() + word.slice(1) : "";
+    })
+    .join(' ');  // Join the words back together with a space
+}
 
 /**
  * Helper to fetch data using GET request.
@@ -51,7 +76,6 @@ export async function postData(url, data = {}, config = null) {
   }
 }
 
-
 /**
  * Convert a form into a plain JavaScript object.
  *
@@ -62,7 +86,7 @@ export async function postData(url, data = {}, config = null) {
  * const data = formToObject('loginForm');
  * // => { email: "user@example.com", remember: "on" }
  */
-export function formToObject(form) {
+export function fd2obj(form) {
   const formElement = typeof form === 'string'
     ? document.getElementById(form)
     : form;
@@ -173,7 +197,6 @@ export function titleCaseTableHeaders($thead, excludes = [], uppercase = [], low
   });
 }
 
-
 /**
  * Creates an HTML table from an array of data.
  *
@@ -182,7 +205,7 @@ export function titleCaseTableHeaders($thead, excludes = [], uppercase = [], low
  * @param {boolean} [fixTableHead=true] - Whether to apply a "tbl-fixedhead" class to the table header for potential fixed positioning. Defaults to true.
  * @returns {{table: HTMLTableElement, thead: HTMLTableSectionElement, tbody: HTMLTableSectionElement, data: Array<Object>, tbl: {table: HTMLTableElement, thead: HTMLTableSectionElement, tbody: HTMLTableSectionElement}}|boolean} An object containing references to the created table elements and the original data, or `false` if the input data is invalid.
  */
-export function createTableNew({
+export function createTable({
   data,
   includeSerial = false,
   fixTableHead = true,
@@ -694,7 +717,6 @@ export function between(num, range, inclusive = true) {
 export function daysInMonth(month, year) {
   return new Date(year, month, 0).getDate();
 }
-
 
 /* 
   this function requries npm exceljs 

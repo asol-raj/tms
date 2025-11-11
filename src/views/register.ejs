@@ -20,33 +20,36 @@
                 </div>
 
                 <form id="registerForm">
-                    <div class="input-group mb-3">
+                    <div class="mb-3">
+                        <input type="text" class="form-control form-control-lg bg-light fs-6"
+                            placeholder="Full Name" id="fullName" name="fullname" required>
+                    </div>
+                    <div class="mb-3">
                         <input type="text" class="form-control form-control-lg bg-light fs-6"
                             placeholder="Username (Optional)" id="username" name="username">
-                    </div>
-
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control form-control-lg bg-light fs-6"
-                            placeholder="First Name (Optional)" id="firstName" name="firstName">
-                    </div>
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control form-control-lg bg-light fs-6"
-                            placeholder="Last Name (Optional)" id="lastName" name="lastName">
-                    </div>
-                    <div class="input-group mb-3">
+                    </div>                    
+                    <div class="mb-3">
                         <input type="email" class="form-control form-control-lg bg-light fs-6"
                             placeholder="Email address" id="email" name="email" required>
                     </div>
-                    <div class="input-group mb-3">
+
+                    <div class="mb-3">
                         <input type="password" class="form-control form-control-lg bg-light fs-6" placeholder="Password"
                             id="password" name="password" required>
                     </div>
-                    <div class="input-group mb-4">
+                    <div class="mb-4">
                         <input type="password" class="form-control form-control-lg bg-light fs-6"
                             placeholder="Confirm Password" id="confirmPassword" name="confirmPassword" required>
                     </div>
 
-                    <div class="input-group mb-3">
+                    <div class="mb-4">
+                        <select name="userrole" id="userRole" class="form-select">
+                            <option value="user" selected>User</option>
+                            <option value="manager">Manager</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <button type="submit" class="btn btn-lg btn-success w-100 fs-6">Register</button>
                     </div>
                     <div class="row">
@@ -106,12 +109,12 @@
             errorMessageDiv.classList.add('d-none'); // Hide previous errors
             successMessageDiv.classList.add('d-none'); // Hide previous success messages
 
+            const fullname = document.getElementById('fullName').value;
             const username = document.getElementById('username').value;
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
+            const userrole = document.getElementById('userRole').value;
 
             // Client-side password confirmation
             if (password !== confirmPassword) {
@@ -127,11 +130,11 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        username: username || null, // Send null if empty
-                        firstName: firstName || null,
-                        lastName: lastName || null,
                         email,
-                        password
+                        password,
+                        fullname: fullname || null,
+                        username: username || null, // Send null if empty
+                        userrole: userrole || 'user'
                     }),
                 });
 

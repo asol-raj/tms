@@ -97,6 +97,8 @@
   })
 */
 
+// createForm.esm.js — Bootstrap 5 form generator (ESM default export)
+
 export default function createForm(schema, opts = {}) {
   const {
     value = null,
@@ -129,11 +131,20 @@ export default function createForm(schema, opts = {}) {
 
   fields.forEach(([key, def], idx) => {
     const fieldWrap = buildField(key, def, value?.[key]);
-    (useTwoCols && idx >= colbreak ? colRight : colLeft).appendChild(fieldWrap);
 
+    // Hidden fields are returned as just the input node (no layout). Append them straight to the form root
+    // so they don't consume grid space.
+    if (isHiddenDef(def)) {
+      form.appendChild(fieldWrap);
+    } else {
+      (useTwoCols && idx >= colbreak ? colRight : colLeft).appendChild(fieldWrap);
+    }
+
+    // Dynamic select options (unchanged)
     if (def.type === 'select' && !Array.isArray(def.options) && def.query && typeof loadOptions === 'function') {
       Promise.resolve(loadOptions(key, def)).then((arr) => {
-        const sel = fieldWrap.querySelector('select'); if (!sel) return;
+        const sel = (isHiddenDef(def) ? form : fieldWrap).querySelector(`select[name="${cssEsc(key)}"]`);
+        if (!sel) return;
         fillSelectOptions(sel, def, arr || []);
       });
     }
@@ -305,7 +316,7 @@ export default function createForm(schema, opts = {}) {
     const b = el('button', className); b.type = type; b.textContent = text; return b;
   }
   function ucfirst(s) { return (s || '').replace(/^./, c => c.toUpperCase()).replace(/_/g, ' '); }
-  function mapInputType(t) { return ['email', 'password', 'search', 'number', 'date', 'datetime-local', 'text'].includes(t) ? t : 'text'; }
+  function mapInputType(t) { return ['email', 'password', 'search', 'number', 'date', 'datetime-local', 'text', 'hidden'].includes(t) ? t : 'text'; }
   function applyCasing(input, mode) {
     const toTitle = s => s.replace(/\w\S*/g, t => t[0].toUpperCase() + t.slice(1).toLowerCase());
     const toSentence = s => s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : s;
@@ -331,42 +342,32 @@ export default function createForm(schema, opts = {}) {
 
     // Add a blank option ONLY when not required and not multi
     if (def?.blank && !isRequired && !isMulti) {
-      // Ensure blank is the very first option
       const blankOpt = new Option('', '');
       select.add(blankOpt, 0);
     }
 
-    // Populate actual options
     (optsArr || []).forEach(opt => {
       const val = opt?.id ?? opt?.value ?? String(opt);
       const txt = opt?.value ?? String(opt);
       select.add(new Option(txt, String(val)));
     });
 
-    // Apply initial/default selection
     const initial = def?.default;
 
     if (isMulti) {
-      // Multi-select: select all defaults if provided as an array
       const initVals = Array.isArray(initial) ? initial.map(String) : [];
       if (initVals.length) {
         [...select.options].forEach(o => { if (initVals.includes(String(o.value))) o.selected = true; });
       }
     } else {
       if (initial != null && initial !== '') {
-        // Try selecting the provided default
         const target = String(initial);
         select.value = target;
-
-        // Guard: if no match, don't leave the (possibly blank) first option selected unintentionally
         if (select.value !== target) {
           const match = [...select.options].find(o => String(o.value) === target);
           if (match) match.selected = true;
         }
       } else {
-        // No default provided:
-        // - If there's a blank, keep it selected (browser default)
-        // - If no blank and there are options, select the first real option
         if (!(def?.blank && !isRequired && !isMulti) && select.options.length > 0) {
           select.selectedIndex = 0;
         }
@@ -377,11 +378,31 @@ export default function createForm(schema, opts = {}) {
   function requiredTrue(v) { return v === true || v === 'true'; }
   function truthy(v) { return v === true || v === 1 || v === '1' || v === 'true'; }
   function cssEsc(str) { return String(str).replace(/"/g, '\\"'); }
+  function isHiddenDef(def) { return String(def?.type || '').toLowerCase() === 'hidden'; }
+
   function buildField(name, def = {}, initial) {
     const type = (def.type || 'text').toLowerCase();
-    const wrap = el('div', `mb-2 ${name}`);
     const id = name;
     const labelText = def.label ?? ucfirst(name);
+
+    // ——— NEW: dedicated hidden-field path ———
+    if (type === 'hidden') {
+      const hidden = document.createElement('input');
+      hidden.type = 'hidden';
+      hidden.id = id;
+      hidden.name = name;
+
+      let val = initial ?? def.default ?? '';
+      if (val != null && val !== '') hidden.value = String(val);
+
+      // Allow validation if someone marks a hidden field required
+      if (requiredTrue(def.required)) hidden.required = true;
+
+      return hidden; // no wrapper, no label, no grid spacing
+    }
+    // ——— end hidden ———
+
+    const wrap = el('div', `mb-2 ${name}`);
 
     const isCheck = type === 'checkbox';
     const isRadio = type === 'radio';
@@ -488,6 +509,7 @@ export default function createForm(schema, opts = {}) {
 
     return wrap;
   }
+
   function makeAlert(kind) {
     const wrap = el('div', `alert alert-${kind} d-none mt-3 d-flex justify-content-between align-items-center`);
     wrap.role = 'alert';
@@ -519,4 +541,5 @@ export default function createForm(schema, opts = {}) {
     return m;
   }
 }
+
 

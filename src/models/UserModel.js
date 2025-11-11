@@ -14,7 +14,7 @@ class User {
    * @throws {Error} - If the email or username already exists, or on database error.
    */
   static async create(userData) {
-    const { email, password, username, firstName, lastName } = userData;
+    const { email, password, username, fullname, userrole = 'user' } = userData;
 
     // 1. Hash the password
     const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -30,15 +30,15 @@ class User {
       // 3. Insert into 'users' table
       const userSql = `
         INSERT INTO users 
-          (email, password_hash, username, first_name, last_name) 
+          (email, password_hash, username, fullname, user_role) 
         VALUES (?, ?, ?, ?, ?)
       `;
       const [userResult] = await connection.query(userSql, [
         email,
         hashedPassword,
         username,
-        firstName,
-        lastName
+        fullname,
+        userrole
       ]);
 
       const newUserId = userResult.insertId;
@@ -97,7 +97,7 @@ class User {
     // 1. Find the user by email
     const userSql = 'SELECT * FROM users WHERE email = ? AND is_active = 1';
     const [rows] = await pool.query(userSql, [email]);
-    const user = rows[0];
+    const user = rows[0]; //log(user);
 
     if (!user) {
       throw new Error('Invalid email or password.');
@@ -115,8 +115,10 @@ class User {
     const payload = {
       user: {
         id: user.id,
-        email: user.email,        
-        role: user.user_role
+        role: user.user_role,
+        email: user.email,
+        fullname: user.fullname,
+        user_id: user.user_id,
       }
     };
 

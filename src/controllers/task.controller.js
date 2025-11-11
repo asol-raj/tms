@@ -1,4 +1,4 @@
-import Task from '../models/task.model.js';
+import Task from '../models/taskModel.js';
 
 export async function handleCreateTask(req, res) {
     try {
@@ -15,10 +15,10 @@ export async function handleCreateTask(req, res) {
         };
 
         const task = await Task.create(newTaskData);
-        res.status(201).json(task);
+        res.status(201).json({status: true, task });
 
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({status: false,  message: error.message });
     }
 }
 
