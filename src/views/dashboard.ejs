@@ -7,7 +7,7 @@
         <div class="col-12 col-lg-9">
             <div class="d-flex justify-content-end align-items-center gap-5">
 
-                <? if(user.role === 'admin'){ ?>
+                <? if(user.role !== 'user'){ ?>
                 <button class="btn btn-bd-primary px-5 create-task border-2 me-auto me-lg-0">Create Task</button>
                 <? } ?>
 
