@@ -26,9 +26,9 @@
 
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="/auth/profile">Profile</a></li>
-                        <li><a class="dropdown-item" href="/auth/settings">Settings</a></li>
                         <? if(user.role === 'admin'){ ?>
-                        <li><a class="dropdown-item" href="/admin/register">Register</a></li>
+                        <li><a class="dropdown-item" href="/auth/settings">Settings</a></li>
+                        <!-- <li><a class="dropdown-item" href="/admin/register">Register</a></li> -->
                         <? } ?>
                         <li>
                             <hr class="dropdown-divider">

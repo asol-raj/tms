@@ -120,66 +120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
 })
 
-async function loadData_() {
-    try {
-        let res = await fetchData('/auth/tasks/view'); //return;
-        let tbl = createTable({ data: res.data });
-
-        const $table = jq(tbl.table);
-        const $tbody = jq(tbl.tbody);
-        const $thead = jq(tbl.thead);
-
-        $tbody.find(`[data-key="status"]`).each((i, e) => {
-            log(jq(e).text());
-            jq(e).text(toTitleCase(e.textContent));
-        })
-
-        addColumnBorders(jq(tbl.table));
-        titleCaseTableHeaders(jq(tbl.thead));
-        let role = await fetchData('/auth/userrole');
-
-        inlineEditAdvance(jq(tbl.tbody), {
-            dataKeys: [role === 'user' ? 'remarks' : '', role === 'admin' ? 'comments' : ''],
-            dataSelect: role === 'admin' ? ([
-                { datakey: 'assigned_to', colnaname: 'assigned_to', options: [], qry: "select id, fullname from users where user_role='user' and is_active=true" }
-            ]) : [],
-            dbtable: 'tasks'
-        })
-
-        const statusOptions = {
-            // "": {
-            //     text: "--- CLEAR ---",
-            //     bgColor: "#f5f5f5", // Optional: style for the button
-            //     textColor: "#555"
-            // },
-            "pending": { text: "Pending", bgColor: 'deepskyblue', textColor: 'white' }, // No color
-            "in_progress": { text: "In Progress", bgColor: 'blue', textColor: 'white' }, // No color
-            "completed": { text: "Completed", bgColor: 'green', textColor: 'white' }, // No color
-            "archived": { text: "Archived", bgColor: 'red', textColor: 'white' }, // No color
-
-        };
-
-
-        attachEditableControls($table[0], 'status', statusOptions, async (cell, value) => {
-            let id = jq(cell).closest('tr').find(`[data-key="id"]`).data('value');
-            const payload = { table: 'tasks', field: 'status', value, id }; //log(payload);
-            // let rs = await advanceMysqlQuery({ key: `update_gender_${table}`, values: [value, id] });
-            await fetch('/auth/inline/edit', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            loadData();
-        });
-
-        jq('div.dataTable').html(tbl.table);
-
-
-
-    } catch (error) {
-        log(error);
-    }
-}
 
 let currentFilter = 'all'; // global tracker
 
@@ -226,7 +166,7 @@ async function loadData(statusFilter = null) {
                 role === 'user' ? 'remarks' : '',
                 role === 'admin' ? 'comments' : ''
             ],
-            dataSelect: role === 'admin'
+            dataSelect: role !== 'user'
                 ? [{
                     datakey: 'assigned_to',
                     colnaname: 'assigned_to',
@@ -239,7 +179,7 @@ async function loadData(statusFilter = null) {
 
         const statusOptions = {
             "pending": { text: "Pending", bgColor: 'deepskyblue', textColor: 'white' },
-            "in_progress": { text: "In Progress", bgColor: 'blue', textColor: 'white' },
+            "in_progress": { text: "In Progress", bgColor: '#0d6efd', textColor: 'white' },
             "completed": { text: "Completed", bgColor: 'green', textColor: 'white' },
             "archived": { text: "Archived", bgColor: 'red', textColor: 'white' }
         };
@@ -259,9 +199,9 @@ async function loadData(statusFilter = null) {
         });
 
         const priorityOptions = {
-            "high": { text: "High", bgColor: 'orange', textColor: 'white' },
-            "medium": { text: "Medium", bgColor: 'green', textColor: 'white' },
-            "low": { text: "Low", bgColor: 'deepskyblue', textColor: 'white' }
+            "high": { text: "High", bgColor: '#ff5f00', textColor: 'white' },
+            "medium": { text: "Medium", bgColor: '#ffe675', textColor: 'black' }, //#ffe675 , #b9ff75
+            "low": { text: "Low", bgColor: '#b9ff75', textColor: 'black' } //#00bfff
         };
 
         attachEditableControls($table[0], 'priority', priorityOptions, async (cell, value) => {

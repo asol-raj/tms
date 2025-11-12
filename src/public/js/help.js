@@ -1201,3 +1201,61 @@ export function createFormSmart({
 
   return formHtml;
 }
+
+export function createFlyoutMenu(triggerElement, items, handlerMap = {}, rowData = null) {
+  // Remove old menu if exists
+  const oldMenu = document.querySelector(".flyout-menu");
+  if (oldMenu) oldMenu.remove();
+
+  const menu = document.createElement("div");
+  menu.className = "flyout-menu z-5";
+
+  items.forEach(item => {
+    const menuItem = document.createElement("div");
+    menuItem.className = "flyout-menu-item";
+    if (item?.class) menuItem.classList.add(item.class);
+    if (item.id) menuItem.id = item.id;
+    menuItem.textContent = item.key;
+
+    menu.appendChild(menuItem);
+
+    // --- Bind handler from handlerMap if exists ---
+    if (item.id && handlerMap[item.id]) {
+      jq(menuItem).off('click').on('click', () => {
+        handlerMap[item.id](rowData, triggerElement, item); // pass trigger element & item
+        menu.remove(); // remove menu after click
+      });
+    } else {
+      // default: remove menu when clicked
+      jq(menuItem).off('click').on('click', () => menu.remove());
+    }
+  });
+
+  document.body.appendChild(menu);
+
+  // --- Position menu intelligently ---
+  const rect = triggerElement.getBoundingClientRect();
+  const menuRect = menu.getBoundingClientRect();
+  let top = rect.bottom;
+  let left = rect.left;
+
+  if (left + menuRect.width > window.innerWidth) {
+    left = rect.right - menuRect.width;
+  }
+  if (top + menuRect.height > window.innerHeight) {
+    top = rect.top - menuRect.height;
+  }
+
+  menu.style.position = "absolute";
+  menu.style.top = `${Math.max(0, top)}px`;
+  menu.style.left = `${Math.max(0, left)}px`;
+
+  // --- Close on outside click ---
+  const handleClickOutside = (e) => {
+    if (!menu.contains(e.target)) {
+      menu.remove();
+      document.removeEventListener("click", handleClickOutside);
+    }
+  };
+  setTimeout(() => document.addEventListener("click", handleClickOutside), 0);
+}

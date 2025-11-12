@@ -1,7 +1,7 @@
 // /routes/authRoutes.js
 import express from 'express';
 import authMiddleware from '../middleware/authMiddleware.js';
-import { registerUser, loginUser } from '../controllers/authController.js';
+import { registerUser, loginUser, resetPassword, changePasswor } from '../controllers/authController.js';
 import { advanceMysqlQuery, getUserRole, inlineUpdateController, runSelect } from '../controllers/controller.js';
 // import { handleCreateTask } from '../controllers/task.controller.js';
 import { getAllTasks, getTasksForUser, handleCreateTask } from '../controllers/taskController.js';
@@ -47,6 +47,7 @@ router.post('/auth/advance/query', advanceMysqlQuery);
 router.post('/auth/create/task', handleCreateTask);
 router.patch('/auth/inline/edit', inlineUpdateController);
 
-
+router.post('/auth/password/reset', resetPassword);
+router.post('/auth/password/change', changePasswor);
 
 export default router;

@@ -1,4 +1,4 @@
--- Active: 1758703925434@@127.0.0.1@3306@taskmgmt
+-- Active: 1758133010005@@127.0.0.1@3306@taskmgmt
 
 CREATE DATABASE IF NOT EXISTS taskmgmt;
 USE taskmgmt;
@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 );
 
 SELECT * FROM users;
+UPDATE users SET user_role = 'admin' WHERE id = 1;
 
 
 CREATE TABLE IF NOT EXISTS `user_profile` (
@@ -47,7 +48,7 @@ CREATE TABLE IF NOT EXISTS `user_profile` (
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 );
 
-DROP TABLE tasks;
+-- DROP TABLE tasks;
 -- Tasks Table
 CREATE TABLE IF NOT EXISTS `tasks` (
     `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,    

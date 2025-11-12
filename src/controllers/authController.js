@@ -17,6 +17,13 @@ export const registerUser = async (req, res) => {
             });
         }
 
+        if (!password.length > 5) {
+            return res.status(400).json({
+                message: 'Password Must be 6 Characters Long'
+            });
+        }
+
+
         // 3. Call the model to create the user
         // The model (User.create) handles password hashing, transactions,
         // and checking for duplicate emails/usernames.
@@ -88,3 +95,44 @@ export const loginUser = async (req, res) => {
         res.status(500).json({ message: 'Internal server error.' });
     }
 };
+
+export const resetPassword = async (req, res) => {
+    try {
+        const adminId = req.user.id;
+        const { userid, password } = req.body;
+
+        if (!userid || !password) {
+            return res.status(400).json({
+                message: 'password is required.'
+            });
+        }
+
+        if (!password.length > 5) {
+            return res.status(400).json({
+                message: 'Password Must be 6 Characters Long'
+            });
+        }
+
+        const resp = User.resetPassword(adminId, userid, password);
+        res.status(201).json({
+            message: 'Password Changed successfully!',
+        });
+
+    } catch (error) {
+        console.error('Error during reset Password:', error);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+}
+
+
+export async function changePasswor(req, res) {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+    await User.changePassword(userId, currentPassword, newPassword);
+    // optionally invalidate sessions/jwt tokens
+    res.json({ ok: true, message: 'Password changed.' });
+  } catch (err) {
+    res.status(400).json({ ok: false, error: err.message });
+  }
+}

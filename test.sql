@@ -6,3 +6,5 @@ SELECT t.id, t.title, t.description, t.priority, t.status, t.remarks, u.fullname
 select user_id, fullname from users where user_role='user' and is_active=true
 
 SELECT * FROM users;
+
+

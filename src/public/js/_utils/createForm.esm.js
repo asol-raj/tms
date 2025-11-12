@@ -116,6 +116,7 @@ export default function createForm(schema, opts = {}) {
     trapTab = true,          // keep Tab focus inside the form
     modal = false,           // render into Bootstrap modal if true
     modalTitle = 'Form',
+    modalSize ='lg'
   } = opts;
 
   const form = document.createElement('form');
@@ -528,7 +529,7 @@ export default function createForm(schema, opts = {}) {
     const m = document.createElement('div');
     m.className = 'modal fade'; m.tabIndex = -1;
     m.innerHTML = `
-      <div class="modal-dialog modal-lg">
+      <div class="modal-dialog modal-${modalSize}">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title"></h5>
