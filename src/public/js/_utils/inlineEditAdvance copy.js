@@ -17,7 +17,7 @@ import { advanceMysqlQuery, jq, log } from "../help.js";
  *    debug: true
  *    dataSelect: [dataKey: 'the data-key value of the column, colname: 'database table column name']
  */
-async function inlineEditAdvance($tbody, { dataKeys = [], dataSelect = [], validateKey = [], dbtable, idKey = "id", debug = false, callback = null, checkNullKeys = [] } = {}) {
+async function inlineEditAdvance($tbody, { dataKeys = [], dataSelect = [], validateKey = [], dbtable, idKey = "id", debug = false, callback = null } = {}) {
     try {
         // normalize $tbody to jq
         if (typeof $tbody === "string" || $tbody instanceof Element) $tbody = jq($tbody);
@@ -94,10 +94,6 @@ async function inlineEditAdvance($tbody, { dataKeys = [], dataSelect = [], valid
         const editableSelector = Array.from(allKeys).map(k => `[data-key="${k}"]`).join(", "); //log(editableSelector);
         const editableSelect = Array.from(Array.from(selectMap.keys())).map(k => `[data-key="${k}"]`).join(", "); //log(editableSelect);
 
-        // ----------------- NEW: normalize checkNullKeys into a Set -----------------
-        const checkNullSet = new Set(Array.isArray(checkNullKeys) ? checkNullKeys.map(k => String(k)) : []);
-        // -------------------------------------------------------------------------
-
         $tbody.find(editableSelect).each(function () {
             const $cell = jq(this);
             if (!$cell.text()) {
@@ -173,13 +169,6 @@ async function inlineEditAdvance($tbody, { dataKeys = [], dataSelect = [], valid
 
         // ---------- Shared patch ----------
         const patchCellValue = async ($cell, datakey, newValue) => {
-            // ----------------- NEW: reject blank for keys in checkNullSet -----------------
-            if ((newValue === '' || newValue === null) && checkNullSet.has(String(datakey))) {
-                flashErrorInline($cell, 'This field cannot be blank');
-                return false;
-            }
-            // ---------------------------------------------------------------------------
-
             const row = $cell.closest("tr");
             const rowId = row.find(`[data-key="${idKey}"]`).text().trim();
             if (!rowId) { flashErrorInline($cell, `Row id not found (data-key="${idKey}")`); return false; }
@@ -276,11 +265,7 @@ async function inlineEditAdvance($tbody, { dataKeys = [], dataSelect = [], valid
             const matchById = localOptions.find(o => String(o.id) === String(currentText));
             if (!selectedId && matchById) selectedId = matchById.id;
 
-            // ----------------- UPDATED: disallow blank option for keys in checkNullSet -----------------
-            let allowBlank = (selectMap.get(datakey)?.blank) || false;
-            if (checkNullSet.has(String(datakey))) allowBlank = false;
-            // -------------------------------------------------------------------------------------------
-
+            const allowBlank = (selectMap.get(datakey)?.blank) || false;
             const $select = buildSelectFromOptions(localOptions, selectedId, allowBlank);
             $cell.empty().append($select);
             $select.trigger('focus');
@@ -292,17 +277,6 @@ async function inlineEditAdvance($tbody, { dataKeys = [], dataSelect = [], valid
 
             $select.on("change", async function () {
                 const selVal = jq(this).val();
-
-                // ----------------- NEW: prevent selecting blank for protected keys -----------------
-                if ((selVal === '' || selVal === null) && checkNullSet.has(String(datakey))) {
-                    flashErrorInline($cell, 'This field cannot be blank');
-                    // restore previous view and close select
-                    $cell.html(prevHtml);
-                    closeAndRemoveSelect($cell, $select, prevHtml);
-                    return;
-                }
-                // ------------------------------------------------------------------------------------
-
                 const selOpt = localOptions.find(o => String(o.id) === String(selVal));
                 const ok = await patchCellValue($cell, datakey, selVal);
                 if (ok) {
@@ -340,16 +314,8 @@ async function inlineEditAdvance($tbody, { dataKeys = [], dataSelect = [], valid
                     const value = $currentCell.text().trim();
                     const original = $currentCell.data("original");
                     if (value !== original) {
-                        // ----------------- NEW: block saving blank for protected keys -----------------
-                        if ((value === '' || value === null) && checkNullSet.has(String(datakey))) {
-                            flashErrorInline($currentCell, 'This field cannot be blank');
-                            // restore original so UI remains consistent
-                            $currentCell.html(original);
-                        } else {
-                            const ok = await patchCellValue($currentCell, datakey, value);
-                            if (ok) $currentCell.data("original", value);
-                        }
-                        // --------------------------------------------------------------------------------
+                        const ok = await patchCellValue($currentCell, datakey, value);
+                        if (ok) $currentCell.data("original", value);
                     }
 
                     let $targetCell;

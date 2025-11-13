@@ -31,6 +31,11 @@ export default {
         id: { type: 'hidden' },
     },
 
+    edit_comment: {
+        comments: { label: "Commetns", type: 'textarea' },
+        id: { type: 'hidden' },
+    },
+
     user_profile: {
         phone: { label: 'Phone Number', type: 'text' },
         address_line1: { label: 'Address', type: 'textarea' },
