@@ -1,14 +1,14 @@
-<div class="container">
+<div class="container-lg">
     <div class="row mt-2 py-2 align-items-center">
-        <div class="col-12 col-lg-3 mb-3 mb-lg-0">
+        <div class="col-12 col-sm-3 mb-3 mb-sm-0">
             <div class="fw-bold mb-0 fs-1 text-primary">TMS</div>
         </div>
 
-        <div class="col-12 col-lg-9">
+        <div class="col-12 col-sm-9">
             <div class="d-flex justify-content-end align-items-center gap-5">
 
                 <? if(user.role !== 'user'){ ?>
-                <button class="btn btn-bd-primary px-5 create-task border-2 me-auto me-lg-0">Create Task</button>
+                <button class="btn btn-bd-primary px-sm-5 create-task border-2 me-auto me-sm-0">Create Task</button>
                 <? } ?>
 
                 <span class="text-secondary">
@@ -27,9 +27,9 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><span class="dropdown-item" role="button" id="updateProfile">Profile</span></li>
                         <li><span class="dropdown-item" role="button" id="changePwd">Change Password</span></li>
+                        <li><span class="dropdown-item" role="button" id="viewPosts">View Posts</span></li>
                         <? if(user.role === 'admin'){ ?>
-                            <li><a class="dropdown-item" href="/auth/posts">View Posts</a></li>
-                        <li><a class="dropdown-item" href="/auth/settings">Settings</a></li>
+                            <li><a class="dropdown-item" href="/auth/settings">Settings</a></li>
                         <? } ?>
                         <li>
                             <hr class="dropdown-divider">
@@ -37,24 +37,24 @@
                         <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
                     </ul>
                 </div>
-
             </div>
         </div>
     </div>
 </div>
+<hr>
 <div class="container-fluid">
     <div class="row g-4">
         <div class="col-9 border-end" id="leftSide">
             <div class="my-4 d-flex flex-wrap justify-content-between align-items-center gap-5 filter-buttons"
                 id="actionBtn">
-                <button class="btn btn-success px-5 border-2 me-auto filter-btn fw-semibold all">All</button>
-                <button class="btn btn-outline-info px-5 border-2 filter-btn fw-semibold pending">Pending</button>
-                <button class="btn btn-outline-primary px-5 border-2 filter-btn fw-semibold in_progress">In
+                <button class="btn btn-success px-lg-5 border-2 me-auto filter-btn fw-semibold all">All</button>
+                <button class="btn btn-outline-info px-lg-5 border-2 filter-btn fw-semibold pending">Pending</button>
+                <button class="btn btn-outline-primary px-lg-5 border-2 filter-btn fw-semibold in_progress">In
                     Progress</button>
                 <button
-                    class="btn btn-outline-success px-5 border-2 filter-btn fw-semibold completed">Completed</button>
+                    class="btn btn-outline-success px-lg-5 border-2 filter-btn fw-semibold completed">Completed</button>
                 <button
-                    class="btn btn-outline-danger px-5 border-2 filter-btn fw-semibold archived d-none">Archived</button>
+                    class="btn btn-outline-danger px-lg-5 border-2 filter-btn fw-semibold archived d-none">Archived</button>
             </div>
 
             <div class="dataTable table-responsive" id="dataTable"></div>
@@ -72,13 +72,13 @@
             <div class="view-posts mt-4 max-vh-70 overflow-auto"></div> -->
 
             <div class="postsfeeds">
-                <div class="text-center position-relative">
-                    <h4>Posts & Feeds</h4>
-                    <button class="btn-close hide-posts position-absolute top-0 end-0 me-1 mt-1" title="Hide Posts & Feeds"></button>
+                <div class="d-flex justify-content-between align-items-center position-relative">
+                    <h4 class="mb-0">Posts & Feeds</h4>
+                    <button class="btn-close" id="hidePosts" title="Hide Posts & Feeds"></button>
                     <!-- <p>Scroll down to see the floating button.</p> -->
                 </div>
 
-                <div id="createPostContainer" class="posts d-none">
+                <div id="createPostContainer" class="posts my-3 p-3 border rounded-2 d-none">
                     <h5>Create a New Post</h5>
                     <hr class="my-3">
 
@@ -104,7 +104,7 @@
             </div>
 
             <? if(user.role !== 'user'){ ?>
-            <button id="showPostFormBtn" class="btn btn-primary btn-lg rounded-circle" type="button" title="Create New Post">
+            <button id="showPostFormBtn" class="btn btn-primary btn-lg rounded-circle position-fixed bottom-0 end-0 m-4" type="button" title="Show Create New Post">
                 <i class="bi bi-plus-lg"></i>
             </button>
             <? } ?>
@@ -130,17 +130,16 @@
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
         transition: all 0.15s ease-in-out;
     } */
-    /* * 1. STYLES FOR THE FLOATING ACTION BUTTON (FAB)
-         */
+
     #showPostFormBtn {
-        position: fixed;
+        /* position: fixed; */
         /* Floats relative to the viewport */
-        bottom: 30px;
+        /* bottom: 30px; */
         right: 30px;
         width: 60px;
         /* Round button dimensions */
         height: 60px;
-        font-size: 28px;
+        font-size: 20px;
         /* Makes the '+' bigger */
         line-height: 1.5;
         z-index: 1050;
@@ -149,34 +148,26 @@
 
         /* Prevents text selection on double click */
         user-select: none;
-    }
+    }   
 
-    /* * 2. STYLES FOR THE FORM CONTAINER
-         * This just centers it and gives it a nice card-like feel.
-         */
-    #createPostContainer {
-        /* max-width: 600px; */
-        margin: 20px auto;
-        padding: 24px;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-
-    /* A little bit of content to demonstrate scrolling */
 </style>
 
 <script src="/_libs/flatpickr.js"></script>
 <script type="module" src="/js/dashboard.js"></script>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> -->
+<script src="/_libs/jquery/jquery.js"></script>
 <script>
     // Alias jQuery to 'jq' to match your code style
     const jq = jQuery.noConflict();
-    jq('button.hide-posts').on('click', ()=>{
+    jq('#hidePosts').on('click', ()=>{
         jq("#rightSide").addClass('d-none');
         jq('#leftSide').removeClass('col-9').addClass('col-12');
     })
-    // Wait for the document to be ready
+
+    jq('#viewPosts').on('click', ()=>{
+        jq('#leftSide').removeClass('col-12').addClass('col-9');
+        jq("#rightSide").removeClass('d-none');
+    })
     
 </script>

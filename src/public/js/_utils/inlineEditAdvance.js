@@ -257,13 +257,13 @@ async function inlineEditAdvance($tbody, { dataKeys = [], dataSelect = [], valid
                 if (!$cell.attr("contenteditable")) {
                     $cell.data("original", $cell.text().trim());
                     $cell.data("saved", false);
-                    $cell.prop("contenteditable", "true").focus();
+                    $cell.prop("contenteditable", "true").trigger('focus');
                 }
                 return;
             }
 
             // SELECT mode
-            if ($cell.find('select.inline-select').length) { $cell.find('select.inline-select').focus(); return; }
+            if ($cell.find('select.inline-select').length) { $cell.find('select.inline-select').trigger('focus'); return; }
 
             const prevHtml = $cell.html();
             $cell.data("original", $cell.text().trim());
@@ -364,7 +364,7 @@ async function inlineEditAdvance($tbody, { dataKeys = [], dataSelect = [], valid
 
                     if ($targetCell?.length) {
                         $currentCell.removeAttr("contenteditable");
-                        $targetCell.prop("contenteditable", "true").focus().click();
+                        $targetCell.prop("contenteditable", "true").trigger('focus').trigger('click');
                         $targetCell[0].scrollIntoView({ behavior: "smooth", block: "center" });
                     } else {
                         $currentCell.removeAttr("contenteditable");

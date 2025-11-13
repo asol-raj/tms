@@ -36,6 +36,11 @@ export default {
         id: { type: 'hidden' },
     },
 
+    edit_remark: {
+        remarks: { label: "Remarks", type: 'textarea' },
+        id: { type: 'hidden' },
+    },
+
     user_profile: {
         phone: { label: 'Phone Number', type: 'text' },
         address_line1: { label: 'Address', type: 'textarea' },

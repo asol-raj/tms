@@ -148,36 +148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 loadData('all');
             }
         });
-
-
-
-        // const form = createForm(formfields.tasks, {
-        //     formid: 'userForm',
-        //     modal: true,                 // <<— render inside a Bootstrap modal
-        //     modalTitle: 'User Registration',
-        //     resetOnSuccess: true,
-        //     autofocus: true,
-        //     trapTab: true,
-        //     colbreak: 10,
-        //     loadOptions: async (field) => {
-        //         if (field === 'assigned_to') {
-        //             let rows = await advanceMysqlQuery({ key: 'na', qry: `select id, fullname as value from users where user_role = 'user' and is_active=true;`});
-        //             return rows?.data || [];
-        //         };
-        //         return [];
-        //     },
-        //     onSubmit: async (api) => {
-        //         // Example: validate then “submit”
-        //         const vals = api.values();
-        //         if (!vals.username || vals.username.length < 3) {
-        //             api.setFieldError('username', 'Please enter at least 3 characters.');
-        //             throw new Error('Please correct the highlighted errors.');
-        //         }
-        //         // simulate server
-        //         await new Promise(r => setTimeout(r, 400));
-        //         return true; // shows success and hides the form
-        //     }
-        // }); log(form);
     })
 
 });
@@ -298,14 +268,14 @@ async function loadData(statusFilter = null) {
                 { key: "created_by", value: 'Created By', width: '', title: '' },
                 { key: "assigned_to", value: 'Assigned To', width: '', title: '' },
             ]
-        })        
+        })
 
         addColumnBorders($table);
         titleCaseTableHeaders($thead);
         inlineEditAdvance($tbody, {
             dataKeys: [
                 ...(role === 'admin' ? ['title', 'description', 'comments'] : []),
-                ...(role === 'user' ? ['remarks'] : []),
+                // ...(role === 'user' ? ['remarks'] : []),
             ],
             dataSelect: role !== 'user'
                 ? [{
@@ -344,12 +314,16 @@ async function loadData(statusFilter = null) {
         }, (cell, row) => {
             const idCell = row.querySelector('[data-key="assigned_to"]');
             const id = idCell ? idCell.dataset.value : null;
-            return id !== 'null';
+            if (role == 'user') {
+                return id !== 'null';
+            } else {
+                return true;
+            };
         }
         );
 
         const priorityOptions = {
-            "high": { text: "High", bgColor: '#ff5f00', textColor: 'white' },
+            "high": { text: "High", bgColor: '#ff4863', textColor: 'white' },
             "medium": { text: "Medium", bgColor: '#ffe675', textColor: 'black' }, //#ffe675 , #b9ff75
             "low": { text: "Low", bgColor: '#b9ff75', textColor: 'black' } //#00bfff
         };
@@ -369,72 +343,122 @@ async function loadData(statusFilter = null) {
             await loadData(currentFilter);
         }, () => role !== 'user');
 
-        $tbody.find(`[data-key="id"]`).addClass('text-primary role-btn').each((i,e)=>{
-            jq(e).on('click', ()=>{
-                let id = arr[i].id;
-                createFlyoutMenu(e, [
-                    { key: 'Edit Task', id: 'editTask' },
-                    { key: 'Edit Comment', id: 'editComment' },
-                    { key: 'Cancel' }
-                ]);
-                jq('#editTask').on('click', async ()=>{
-                    try {
-                        let res = await advanceMysqlQuery({ key: 'na', qry: 'Select * from tasks where id =?', values: [id]}); //log(res.data); return;
-                        let data = res?.data[0] || [];
-                        let form = createFormSmart({ title: 'tasks', formData: data, submitBtnText: 'Update', floatingLabels: false });
-                        let $modal = showModal('Edit Task', 'md', true);
-                        let $body = $modal.find('.modal-body');
-                        $body.html(form);
-                        let $form = $body.find('form');
-                        $form.on('submit', async(e)=>{
-                            e.preventDefault();
-                            try {
-                                let fd = fd2obj(e.target); log(fd);
-                                let { title, description, priority, assigned_to, id} = fd;
-                                let res = await advanceMysqlQuery({ key: 'updateTask', values: [title, description, priority, assigned_to, id]}); log(res.data);
-                                loadData();
-                                $modal.data('bs.modal').hide();
-                            } catch (error) {
-                                log(error);
-                            }
-                        })
-                        $modal.data('bs.modal').show();
-                    } catch (error) {
-                        
-                    }
-                })
+        $tbody.find(`[data-key="id"]`).each((i, e) => {
+            if (role === 'user' && !arr[i].assigned_to) {
+                return
+            };
 
-                jq('#editComment').on('click', async ()=>{
-                    try {
-                        let res = await advanceMysqlQuery({ key: 'na', qry: 'Select * from tasks where id =?', values: [id]}); //log(res.data); return;
-                        let data = res?.data[0] || [];
-                        let form = createFormSmart({ title: 'edit_comment', formData: data, submitBtnText: 'Update', floatingLabels: false });
-                        let $modal = showModal('Edit Comment', 'md', true);
-                        let $body = $modal.find('.modal-body');
-                        $body.html(form);
-                        let $form = $body.find('form');
-                        $form.on('submit', async(e)=>{
-                            e.preventDefault();
-                            try {
-                                let fd = fd2obj(e.target); log(fd);
-                                let { comments, id} = fd;
-                                let res = await advanceMysqlQuery({ key: 'updteComment', values: [comments, id]}); log(res.data);
-                                loadData();
-                                $modal.data('bs.modal').hide();
-                            } catch (error) {
-                                log(error);
-                            }
-                        })
-                        $modal.data('bs.modal').show();
-                    } catch (error) {
-                        
-                    }
-                })
+            jq(e).addClass('text-primary role-btn').on('click', () => {
+                let id = arr[i].id;
+                if (role !== 'user') {
+                    createFlyoutMenu(e, [
+                        { key: 'Edit Task', id: 'editTask' },
+                        { key: 'Edit Comment', id: 'editComment' },
+                        { key: 'Cancel' }
+                    ]);
+                    jq('#editTask').on('click', async () => {
+                        try {
+                            let res = await advanceMysqlQuery({ key: 'na', qry: 'Select * from tasks where id =?', values: [id] }); //log(res.data); return;
+                            let data = res?.data[0] || [];
+                            let form = createFormSmart({ title: 'tasks', formData: data, submitBtnText: 'Update', floatingLabels: false });
+                            let $modal = showModal('Edit Task', 'md', true);
+                            let $body = $modal.find('.modal-body');
+                            $body.html(form);
+                            let $form = $body.find('form');
+                            $form.on('submit', async (e) => {
+                                e.preventDefault();
+                                try {
+                                    let fd = fd2obj(e.target); log(fd);
+                                    let { title, description, priority, assigned_to, id } = fd;
+                                    let res = await advanceMysqlQuery({ key: 'updateTask', values: [title, description, priority, assigned_to, id] }); log(res.data);
+                                    loadData();
+                                    $modal.data('bs.modal').hide();
+                                } catch (error) {
+                                    log(error);
+                                }
+                            })
+                            $modal.data('bs.modal').show();
+                        } catch (error) {
+
+                        }
+                    })
+
+                    jq('#editComment').on('click', async () => {
+                        try {
+                            let res = await advanceMysqlQuery({ key: 'na', qry: 'Select * from tasks where id =?', values: [id] });
+                            let data = res?.data[0] || [];
+                            let form = createFormSmart({ title: 'edit_comment', formData: data, submitBtnText: 'Update', floatingLabels: false });
+                            let $modal = showModal('Edit Comment', 'md', true);
+                            let $body = $modal.find('.modal-body');
+                            $body.html(form);
+                            let $form = $body.find('form');
+                            $form.on('submit', async (e) => {
+                                e.preventDefault();
+                                try {
+                                    let fd = fd2obj(e.target);
+                                    let { comments, id } = fd;
+                                    let res = await advanceMysqlQuery({ key: 'updteComment', values: [comments, id] });
+                                    loadData();
+                                    $modal.data('bs.modal').hide();
+                                } catch (error) {
+                                    log(error);
+                                }
+                            })
+                            $modal.data('bs.modal').show();
+                        } catch (error) {
+                            log(error);
+                        }
+                    })
+                } else {
+                    createFlyoutMenu(e, [
+                        { key: 'Add/Edit Remarks', id: 'editRemarks' },
+                        { key: 'Cancel' }
+                    ]);
+                    jq('#editRemarks').on('click', async () => {
+                        addEditRemarks(id)
+                    })
+                }
             })
+        })
+
+        $tbody.find(`[data-key="remarks"]`).each(function (i, e) {
+            if (!arr[i].assigned_to) return;
+            jq(e).on('dblclick', () => {
+                let id = arr[i].id;
+                addEditRemarks(id);
+            })
+            e.title = 'Double Click to ADD/EDIT Remarks!'
         })
 
         jq('div.dataTable').html(tbl.table);
 
+    } catch (error) {
+        log(error);
+    }
+}
+
+async function addEditRemarks(rowid) {
+    try {
+        let res = await advanceMysqlQuery({ key: 'na', qry: 'Select * from tasks where id =?', values: [rowid] }); //log(res.data); return;
+        let data = res?.data[0] || [];
+        let form = createFormSmart({ title: 'edit_remark', formData: data, submitBtnText: 'Update', floatingLabels: false });
+        let $modal = showModal('Add/Edit Remarks', 'md', true);
+        let $body = $modal.find('.modal-body');
+        $body.html(form);
+        let $form = $body.find('form');
+        $form.on('submit', async (e) => {
+            e.preventDefault();
+            try {
+                let fd = fd2obj(e.target);
+                let { remarks, id } = fd;
+                let res = await advanceMysqlQuery({ key: 'updteRemarks', values: [remarks, id] });
+                loadData();
+                $modal.data('bs.modal').hide();
+            } catch (error) {
+                log(error);
+            }
+        })
+        $modal.data('bs.modal').show();
     } catch (error) {
         log(error);
     }

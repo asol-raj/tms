@@ -22,7 +22,8 @@ const authMiddleware = (req, res, next) => {
     }
 
     if (!token) {
-      return res.status(401).json({ message: 'No token provided.' });
+      // return res.status(401).json({ message: 'No token provided.' });
+      res.redirect('/login');
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -30,7 +31,8 @@ const authMiddleware = (req, res, next) => {
     next();
   } catch (error) {
     log('JWT verify failed:', error?.message || error);
-    return res.status(401).json({ message: 'Token is not valid.' });
+    // return res.status(401).json({ message: 'Token is not valid.' });
+    res.redirect('/login');
   }
 };
 
