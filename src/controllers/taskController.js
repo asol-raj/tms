@@ -2,7 +2,7 @@ import Task from '../models/taskModel.js'; // adjust the import path as needed
 
 export async function handleCreateTask(req, res) {
     try {
-        const { title, description, assigned_to } = req.body;
+        const { title, description, assigned_to, priority = 'low' } = req.body;
         // Assuming you get 'created_by' from the logged-in user's session
         const created_by = req.user.id;
 
@@ -11,7 +11,7 @@ export async function handleCreateTask(req, res) {
             description,
             assigned_to,
             created_by,
-            priority: 'high'
+            priority
         };
 
         const task = await Task.create(newTaskData);

@@ -9,9 +9,6 @@ import os from 'os';
 import { fileURLToPath } from 'url'; // 1. Added for __dirname
 import pkg from 'node-sql-parser';
 const { Parser } = pkg;
-
-
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const parser = new Parser();
@@ -117,10 +114,9 @@ function logRejectedQuery(ip, query, reason) {
 
 export const advanceMysqlQuery = async (req, res) => {
   try {
-    let { key, values = [], type = null, srchterm = null, qry = null } = req.body;
     const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-
-    if (!key || !qry) throw new Error("Missing Query");
+    let { key, values = [], type = null, srchterm = null, qry = null } = req.body;
+    if (!key && !qry) throw new Error("Missing Query");
 
     let sql;
 
@@ -236,6 +232,30 @@ export async function getUserRole(req, res){
     res.json(userrole);
   } catch (error) {
     res.json('user');
+  }
+}
+
+export async function createPost(req, res){
+  try {
+    let userid = req.user.id;
+    // 1. check admin privileges
+    const [adminRows] = await pool.query('SELECT id, user_role FROM users WHERE id = ? LIMIT 1', [userid]);
+
+    const admin = adminRows[0];
+    
+    if (!admin || !admin.id) {
+      throw new Error('Permission denied: caller is not an admin.');
+    }
+
+    const { post } = req.body;
+
+    if(!post) throw new Error('Missing Post Message');
+
+    const rows = await runMysql("insert into posts (post, created_by) values(?,?);", [post, userid]);
+
+    res.status(201).json({ ok: true, data: rows });
+  } catch (error) {
+    res.status(400).json({ ok: false, error: err.message });
   }
 }
 

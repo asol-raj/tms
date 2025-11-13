@@ -8,7 +8,7 @@
 
 // Adjust the path '../config/db.js' as needed based on your file structure.
 // NOTE: With ESM, you often need the full file extension '.js'
-import { pool } from '../config/db.js';
+import { log, pool } from '../config/db.js';
 
 const Task = {
     /**
@@ -129,7 +129,7 @@ const Task = {
 
         // Apply filters dynamically
         if (filters.assigned_to) {
-            conditions.push('t.assigned_to = ?');
+            conditions.push('t.assigned_to = ? OR t.assigned_to IS NULL');
             params.push(filters.assigned_to);
         }
 
@@ -157,7 +157,7 @@ const Task = {
         }
 
         // Default sorting and limit
-        sql += ' ORDER BY t.id DESC LIMIT 100';
+        sql += ' ORDER BY t.id DESC LIMIT 100'; //log(sql)        ;
 
         try {
             const [rows] = await pool.query(sql, params);

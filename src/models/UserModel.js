@@ -203,6 +203,30 @@ class User {
     return { id: userId };
   }
 
+  /*
+  * Profile: cretae user profile
+  * @pram {}
+  */
+  static async updateProfile(userid, prams) {
+    const [rows] = await pool.query('SELECT * FROM user_profile WHERE user_id = ? LIMIT 1', [userid]);
+    const user = rows[0];
+    if (!user) throw new Error('User not found.');
+    const { phone, address_line1, address_line2, city, state, zipcode, id } = prams;
+    const [userResult] = await pool.query(
+      `UPDATE user_profile
+      SET phone=?, address_line1=?, address_line2=?, city=?, state=?, zipcode=? WHERE id = ?`,
+      [phone, address_line1, address_line2, city, state, zipcode, id]
+    );
+    return { userResult }
+  }
+
+  static async getUserProfile(userid){
+    const [rows] = await pool.query('SELECT * FROM user_profile WHERE user_id = ? LIMIT 1', [userid]);
+    const user = rows[0];
+    if (!user) throw new Error('User not found.');
+    return user;
+  }
+
 }
 
 export default User;

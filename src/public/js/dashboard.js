@@ -1,5 +1,5 @@
 import formfields from './formfields.js';
-import { log, jq, advanceMysqlQuery, createFormSmart, fd2obj, postData, createTable, addColumnBorders, titleCaseTableHeaders, fetchData, toTitleCase } from './help.js';
+import { log, jq, advanceMysqlQuery, createFormSmart, fd2obj, postData, createTable, addColumnBorders, titleCaseTableHeaders, fetchData, toTitleCase, initAdvancedTable } from './help.js';
 import createForm from './_utils/createForm.esm.js';
 import showModal from './_utils/modal.js';
 import inlineEditAdvance from './_utils/inlineEditAdvance.js';
@@ -8,50 +8,112 @@ import attachEditableControls from './_utils/flyoutmenu.js';
 
 
 document.addEventListener('DOMContentLoaded', async () => {
-    loadData()
+    loadData();
+    loadPosts();
 
-    // Common handler for all filter buttons
-    // jq('.filter-buttons .filter-btn').on('click', async function () {
-    //     const $btn = jq(this);
+    // --- Selectors ---
+    const $formContainer = jq('#createPostContainer');
+    const $form = jq('#createPost');
+    const $showBtn = jq('#showPostFormBtn');
+    const $cancelBtn = jq('#cancelPostBtn');
+    const $postMsg = jq('#postMsg');
 
-    //     // Remove active state from all buttons
-    //     jq('.filter-buttons .filter-btn')
-    //         .removeClass('active btn-success btn-info btn-primary btn-danger btn-outline-info btn-outline-primary btn-outline-success btn-outline-danger')
-    //         .each((i, e) => {
-    //             // Reset each to its original outline color
-    //             if (jq(e).hasClass('pending')) jq(e).addClass('btn-outline-info');
-    //             else if (jq(e).hasClass('in_progress')) jq(e).addClass('btn-outline-primary');
-    //             else if (jq(e).hasClass('completed')) jq(e).addClass('btn-outline-success');
-    //             else if (jq(e).hasClass('archived')) jq(e).addClass('btn-outline-danger');
-    //             else jq(e).addClass('btn-outline-success'); // for "All"
-    //         });
+    // --- Helper Functions ---
+    function showForm() {
+        $showBtn.hide(); // Hide the '+' button
+        $formContainer.removeClass('d-none'); // Show the form
+        $postMsg.focus(); // Good UX: auto-focus the textarea
+    }
 
-    //     // Highlight the clicked one
-    //     $btn.addClass('active');
+    function hideForm() {
+        $formContainer.addClass('d-none'); // Hide the form
+        $showBtn.show(); // Show the '+' button
+        $postMsg.val(''); // Clear the textarea
+    }
 
-    //     // Apply solid color when active
-    //     if ($btn.hasClass('pending')) $btn.addClass('btn-info');
-    //     else if ($btn.hasClass('in_progress')) $btn.addClass('btn-primary');
-    //     else if ($btn.hasClass('completed')) $btn.addClass('btn-success');
-    //     else if ($btn.hasClass('archived')) $btn.addClass('btn-danger');
-    //     else $btn.addClass('btn-success');
+    // --- Event Handlers ---
 
-    //     // Determine which filter to apply
-    //     let filter = null;
-    //     if ($btn.hasClass('all')) filter = 'all';
-    //     else if ($btn.hasClass('pending')) filter = 'pending';
-    //     else if ($btn.hasClass('in_progress')) filter = 'in_progress';
-    //     else if ($btn.hasClass('completed')) filter = 'completed';
-    //     else if ($btn.hasClass('archived')) filter = 'archived';
+    // 1. Click the floating '+' button
+    $showBtn.on('click', showForm);
 
-    //     // Fetch data
-    //     if (filter === 'all') {
-    //         await loadData(); // no filter
-    //     } else {
-    //         await loadData(filter);
-    //     }
-    // });
+    // 2. Click the 'Cancel' button
+    $cancelBtn.on('click', hideForm);
 
+    $form.on('submit', async (e) => {
+        e.preventDefault();
+        try {
+            let fd = fd2obj(e.target); log(fd);
+            let res = await postData('/auth/create/post', fd);
+            loadPosts();
+            $cancelBtn.trigger('click');
+        } catch (error) {
+            log(error);
+        }
+    })
+
+
+    jq('#updateProfile').on('click', async () => {
+        const res = await fetchData('/auth/user/profile'); //log(res.profile); return;
+        const $modal = showModal('Update Profile', 'md', true);
+        const form = createFormSmart({ title: 'user_profile', formData: res.profile, floatingLabels: false })
+        const $body = $modal.find('div.modal-body');
+        $body.html(form);
+        const $form = $body.find('form');
+        $form.on('submit', async (e) => {
+            e.preventDefault();
+            try {
+                let fd = fd2obj(e.target); log(fd);
+                let rsp = await postData('/auth/update/profile', fd); log(rsp);
+                if (rsp.affectedRows) $modal.data('bs.modal').hide();
+            } catch (error) {
+                log(error);
+            }
+        })
+        $modal.data('bs.modal').show();
+
+    })
+
+    jq('#changePwd').on('click', () => {
+        try {
+            const form = createFormSmart({ title: 'changePwd' });
+            const $modal = showModal('Change Password', 'md', true);
+            const $body = $modal.find('.modal-body');
+            $body.html(form);
+            const $form = $body.find('form');
+            $form.on('submit', async (e) => {
+                e.preventDefault();
+                try {
+                    let fd = fd2obj(e.target); log(fd);
+                    const { newPassword, confirmPwd } = fd;
+                    if (fd.newPassword.length < 6) throw new Error('Pasword Must be 6 characters long');
+                    if (newPassword !== confirmPwd) throw new Error('Password do not matach!');
+                    let res = await postData('/auth/password/change', fd); log(res);
+                    jq('#formMsg')
+                        .removeClass('text-bg-danger')
+                        .addClass('text-bg-success rounded px-5').text(res.message)
+                    $form.find('button').addClass('disabled').prop('disabled', true);
+                } catch (error) {
+                    // log(error);
+                    if (error.response) {
+                        // THIS IS THE ACTUAL ERROR MESSAGE FROM THE SERVER
+                        console.error('Server Response:', error.response.data);
+                        jq('#formMsg').addClass('text-bg-danger px-5').text(error.response.data.error)
+                        console.error('Status Code:', error.response.status);
+                    } else {
+                        // Something else went wrong (e.g., network error)
+                        console.error('Axios Error:', error.message);
+                        jq('#formMsg')
+                            .removeClass('text-bg-success')
+                            .addClass('text-bg-danger rounded px-5').text(error.message)
+                    }
+                }
+            })
+            $modal.data('bs.modal').show();
+        } catch (error) {
+            // log(error);
+
+        }
+    })
 
     jq('.filter-buttons .filter-btn').on('click', async function () {
         const $btn = jq(this);
@@ -80,11 +142,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         $form.on('submit', async (e) => {
             e.preventDefault();
-            let fd = fd2obj(e.target); log(fd);
-            let res = await postData('/auth/create/task', fd); log(res);
+            let fd = fd2obj(e.target);
+            let res = await postData('/auth/create/task', fd);
             if (res.status) {
                 $modal.data('bs.modal').hide();
-                loadData();
+                loadData('all');
             }
         });
 
@@ -118,13 +180,88 @@ document.addEventListener('DOMContentLoaded', async () => {
         //     }
         // }); log(form);
     })
-})
+
+});
+
+async function loadPosts() {
+    try {
+        // Your new query is now much longer, so I'll format it for readability
+        let qry = `
+            SELECT 
+                p.id, p.post, p.publish, 
+                u.fullname AS created_by, 
+                p.created_at, p.updated_at 
+            FROM posts p 
+            JOIN users u ON u.id = p.created_by 
+            WHERE p.publish=true
+            ORDER BY p.id DESC 
+            LIMIT 100;
+        `;
+
+        let res = await advanceMysqlQuery({ key: 'na', qry }); // log(res);
+        let posts = res?.data || [];
+
+        if (!posts.length) {
+            jq('div.view-posts').html('<p>No posts found.</p>');
+            return;
+        }
+
+        let $div = jq('<div>', { class: 'd-flex flex-column gap-4' });
+
+        posts.forEach(post => {
+            // Main container for this single post
+            let $postItem = jq('<div>', {
+                class: 'border-bottom rounded shadow-sm p-2'
+            });
+
+            // 1. Add the post content
+            let $postContent = jq('<div>', { class: 'h6' });
+            $postContent.text(post.post);
+
+            // 2. Create the footer container
+            //    'mt-2' adds a little space above the footer
+            let $postFooter = jq('<div>', {
+                class: 'd-flex justify-content-between mt-4'
+            });
+
+            // 3. Create "created by" element (bottom-left)
+            //    'post.created_by' now holds the user's fullname from your query
+            let $postAuthor = jq('<span>', { class: 'text-secondary small' });
+            $postAuthor.text(`By: ${post.created_by}`);
+
+            // 4. Create "created at" date element (bottom-right)
+            let date = new Date(post.created_at);
+            let formattedDate = date.toLocaleString();
+            let $postDate = jq('<span>', { class: 'text-secondary small' });
+            $postDate.text(formattedDate);
+
+            // 5. Add author and date to the footer
+            $postFooter.append($postAuthor);
+            $postFooter.append($postDate);
+
+            // 6. Add the content and the footer to the main post item
+            $postItem.append($postContent);
+            $postItem.append($postFooter);
+
+            // 7. Add this post item to the list
+            $div.append($postItem);
+        });
+
+        jq('div.view-posts').html($div);
+
+    } catch (error) {
+        log(error);
+        jq('div.view-posts').html('<p>Error loading posts.</p>');
+    }
+}
 
 
 let currentFilter = 'all'; // global tracker
 
 async function loadData(statusFilter = null) {
     try {
+        let role = await fetchData('/auth/userrole');
+        if (role !== 'user') jq('button.archived, #creaetPost').removeClass('d-none');
         // If no filter is passed, use the current active one
         currentFilter = statusFilter || currentFilter;
 
@@ -145,6 +282,7 @@ async function loadData(statusFilter = null) {
             `);
             return; // 🔁 exit the function
         }
+
         let tbl = createTable({ data: res.data });
 
         const $table = jq(tbl.table);
@@ -156,11 +294,16 @@ async function loadData(statusFilter = null) {
             jq(e).text(toTitleCase(e.textContent));
         });
 
+        initAdvancedTable($table, {
+            filterableKeys: [
+                { key: "priority", value: 'Priority', width: '', title: '' },
+                { key: "created_by", value: 'Created By', width: '', title: '' },
+                { key: "assigned_to", value: 'Assigned To', width: '', title: '' },
+            ]
+        })
+
         addColumnBorders($table);
         titleCaseTableHeaders($thead);
-
-        let role = await fetchData('/auth/userrole');
-
         inlineEditAdvance($tbody, {
             dataKeys: [
                 role === 'user' ? 'remarks' : '',
@@ -184,7 +327,10 @@ async function loadData(statusFilter = null) {
             "archived": { text: "Archived", bgColor: 'red', textColor: 'white' }
         };
 
-        attachEditableControls($table[0], 'status', statusOptions, async (cell, value) => {
+        const { archived, ...otherOptions } = statusOptions; //log(otherOptions);
+        const finalOptions = role === 'user' ? otherOptions : statusOptions;
+
+        attachEditableControls($table[0], 'status', finalOptions, async (cell, value) => {
             const id = jq(cell).closest('tr').find(`[data-key="id"]`).data('value');
             const payload = { table: 'tasks', field: 'status', value, id };
 
@@ -196,7 +342,12 @@ async function loadData(statusFilter = null) {
 
             // 🔁 Reload current active filter view
             await loadData(currentFilter);
-        });
+        }, (cell, row) => {
+            const idCell = row.querySelector('[data-key="assigned_to"]');
+            const id = idCell ? idCell.dataset.value : null;
+            return id !== 'null';
+        }
+        );
 
         const priorityOptions = {
             "high": { text: "High", bgColor: '#ff5f00', textColor: 'white' },
@@ -207,6 +358,7 @@ async function loadData(statusFilter = null) {
         attachEditableControls($table[0], 'priority', priorityOptions, async (cell, value) => {
             const id = jq(cell).closest('tr').find(`[data-key="id"]`).data('value');
             const payload = { table: 'tasks', field: 'priority', value, id };
+            if (role == 'user') return;
 
             await fetch('/auth/inline/edit', {
                 method: 'PATCH',
@@ -216,7 +368,8 @@ async function loadData(statusFilter = null) {
 
             // 🔁 Reload current active filter view
             await loadData(currentFilter);
-        });
+        }, () => role !== 'user');
+
 
         jq('div.dataTable').html(tbl.table);
 
@@ -224,7 +377,6 @@ async function loadData(statusFilter = null) {
         log(error);
     }
 }
-
 
 function setActiveButton(filter) {
     const $buttons = jq('.filter-buttons .filter-btn');

@@ -124,15 +124,34 @@ export const resetPassword = async (req, res) => {
     }
 }
 
-
 export async function changePasswor(req, res) {
-  try {
-    const userId = req.user.id;
-    const { currentPassword, newPassword } = req.body;
-    await User.changePassword(userId, currentPassword, newPassword);
-    // optionally invalidate sessions/jwt tokens
-    res.json({ ok: true, message: 'Password changed.' });
-  } catch (err) {
-    res.status(400).json({ ok: false, error: err.message });
-  }
+    try {
+        const userId = req.user.id;
+        const { currentPassword, newPassword } = req.body;
+        await User.changePassword(userId, currentPassword, newPassword);
+        // optionally invalidate sessions/jwt tokens
+        res.json({ ok: true, message: 'Password changed Successfully' });
+    } catch (err) {
+        res.status(400).json({ ok: false, error: err.message });
+    }
+}
+
+export async function getUserprofile(req, res) {
+    try {
+        const userId = req.user.id;
+        let profile = await User.getUserProfile(userId);
+        res.json({ ok: true, profile });
+    } catch (error) {
+        res.status(400).json({ ok: false, error: err.message });
+    }
+}
+
+export async function updteProfile(req, res) {
+    try {
+        let userid = req.user.id;
+        let rsp = await User.updateProfile(userid, req.body);
+        res.json(rsp);
+    } catch (error) {
+        res.status(400).json({ ok: false, error: err.message });
+    }
 }

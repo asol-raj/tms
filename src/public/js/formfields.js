@@ -27,7 +27,28 @@ export default {
                 { id: 'high', value: 'High' },
             ], default: 'low', required: true, blank: false
         },
-        assigned_to: { label: 'Assigned To', type: 'select', query: "select id, email as value from users where user_role = 'user' and is_active=true;", required: false, blank: true },
+        assigned_to: { label: 'Assigned To', type: 'select', query: "select id, fullname as value from users where user_role = 'user' and is_active=true;", required: false, blank: true },
         id: { type: 'hidden' },
+    },
+
+    user_profile: {
+        phone: { label: 'Phone Number', type: 'text' },
+        address_line1: { label: 'Address', type: 'textarea' },
+        address_line2: { label: 'Address Line2', type: 'text' },
+        city: { label: 'City', type: 'text' },
+        state: { label: 'State', type: 'text' },
+        zipcode: { label: 'Zipcode', type: 'text' },
+        id: { type: 'hidden' }
+    },
+
+    changePwd: {
+        currentPassword : { label: 'Old Password', type: 'password', required: true },
+        newPassword: { label: 'New Password', type: 'password', message: 'Minimum 6 characters long!', required: true },
+        confirmPwd: { label: 'Confirm Password', type: 'password', required: true },
+    },
+
+    posts: {
+        post: { label: 'Post Message', type: 'textarea', required: true }
     }
+
 }

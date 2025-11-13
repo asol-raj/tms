@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', (e) => {
                         throw error; // ensures form stays open
                     }
                 }
-            }); log(form);
+            });
 
 
         } catch (error) {
@@ -123,7 +123,7 @@ async function loadData() {
                             modalTitle: 'Reset Password',
                             modalSize: 'md',
                             formid: 'resetPwd',
-                            onSubmit: async (api) => { log(api);
+                            onSubmit: async (api) => {
                                 try {
                                     const vals = api.values();
                                     const { password } = vals;
@@ -177,7 +177,7 @@ async function loadData() {
             });
 
             // 🔁 Reload current active filter view
-            await loadData(currentFilter);
+            await loadData();
         });
 
         const rolesOptions = {
@@ -197,7 +197,7 @@ async function loadData() {
             });
 
             // 🔁 Reload current active filter view
-            await loadData(currentFilter);
+            await loadData();
         });
 
 
