@@ -102,9 +102,11 @@
 
             </div>
 
+            <? if(user.role !== 'user'){ ?>
             <button id="showPostFormBtn" class="btn btn-primary btn-lg rounded-circle" type="button" title="Create New Post">
                 <i class="bi bi-plus-lg"></i>
             </button>
+            <? } ?>
         </div>
     </div>
 </div>
