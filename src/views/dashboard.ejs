@@ -1,13 +1,14 @@
 <div class="container-lg">
     <div class="row mt-2 py-2 align-items-center">
         <div class="col-12 col-sm-3 mb-3 mb-sm-0">
-            <div class="fw-bold mb-0 fs-1 text-primary">TMS</div>
+            <a href="/" class="fw-bold mb-0 fs-1 text-primary nav-link">TMS</a>
         </div>
 
         <div class="col-12 col-sm-9">
             <div class="d-flex justify-content-end align-items-center gap-5">
 
                 <? if(user.role !== 'user'){ ?>
+                <!-- <button class="btn btn-bd-primary px-sm-5 create-daily-task border-2 me-auto me-sm-0">Create Daily Task</button> -->
                 <button class="btn btn-bd-primary px-sm-5 create-task border-2 me-auto me-sm-0">Create Task</button>
                 <? } ?>
 
@@ -28,9 +29,12 @@
                         <li><span class="dropdown-item" role="button" id="updateProfile">Profile</span></li>
                         <li><span class="dropdown-item" role="button" id="changePwd">Change Password</span></li>
                         <li><span class="dropdown-item" role="button" id="viewPosts">View Posts</span></li>
+                        <li><a class="dropdown-item" href="/auth/daily/tasks">Daily Tasks</a></li>
+
                         <? if(user.role === 'admin'){ ?>
-                            <li><a class="dropdown-item" href="/auth/settings">Settings</a></li>
+                        <li><a class="dropdown-item" href="/auth/settings">Settings</a></li>
                         <? } ?>
+
                         <li>
                             <hr class="dropdown-divider">
                         </li>

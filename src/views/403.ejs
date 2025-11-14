@@ -1,0 +1,83 @@
+<div class="card shadow-lg">
+    <div class="corporate-header">
+        <h3>Access Restricted</h3>
+    </div>
+
+    <div class="card-body text-center">
+        <p class="mt-3">
+            We sincerely regret that you do not have the required permissions to access this page.
+            Please contact your administrator if you believe this access is necessary.
+        </p>
+
+        <p class="footer-note mb-4">
+            You will be redirected automatically in
+            <span class="countdown fw-bold" id="seconds">15</span> seconds.
+        </p>
+
+        <button class="btn btn-outline-primary px-4" onclick="history.back()">
+            ⬅ Go Back
+        </button>
+    </div>
+</div>
+
+
+<script>
+    let secondsLeft = 15;
+
+    function updateCountdown() {
+        const el = document.getElementById("seconds");
+        if (!el) return;
+
+        el.textContent = secondsLeft;
+
+        if (secondsLeft <= 0) {
+            window.location.href = '/auth/dashboard'; // Redirect after 15 seconds
+        } else {
+            secondsLeft--;
+            setTimeout(updateCountdown, 1000);
+        }
+    }
+
+    window.onload = updateCountdown;
+</script>
+
+<style>
+    body {
+        background: #eef2f5;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .card {
+        max-width: 550px;
+        border-radius: 10px;
+        border: none;
+    }
+
+    .corporate-header {
+        background: linear-gradient(90deg, #0d6efd, #0a58ca);
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+        color: white;
+        text-align: center;
+    }
+
+    .corporate-header h3 {
+        margin: 0;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .card-body p {
+        font-size: 15px;
+        color: #555;
+    }
+
+    .footer-note {
+        font-size: 13px;
+        color: #888;
+    }
+</style>

@@ -1,4 +1,4 @@
--- Active: 1758133010005@@127.0.0.1@3306@taskmgmt
+-- Active: 1758704013034@@127.0.0.1@3306@taskmgmt
 
 CREATE DATABASE IF NOT EXISTS taskmgmt;
 
@@ -32,9 +32,9 @@ CREATE TABLE IF NOT EXISTS `users` (
     INDEX `idx_role` (`user_role`)
 );
 
-SELECT * FROM users;
+-- SELECT * FROM users;
 
-UPDATE users SET user_role = 'admin' WHERE id = 1;
+-- UPDATE users SET user_role = 'admin' WHERE id = 1;
 
 CREATE TABLE IF NOT EXISTS `user_profile` (
     `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `tasks` (
     CONSTRAINT fk_task_assignee FOREIGN KEY (`assigned_to`) REFERENCES `users` (`id`) ON DELETE CASCADE
 );
 
-SELECT * FROM tasks;
+-- SELECT * FROM tasks;
 
 create table `task_remarks` (
     `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -93,7 +93,7 @@ create table `task_remarks` (
     Foreign Key (`task_id`) REFERENCES `tasks` (`id`) on delete CASCADE,
     Foreign Key (`comment_by`) REFERENCES `users`(`id`) on delete CASCADE
 );
-SELECT * FROM tasks;
+-- SELECT * FROM tasks;
 
 CREATE Table IF NOT EXISTS `posts`( 
     `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -105,7 +105,42 @@ CREATE Table IF NOT EXISTS `posts`(
     Foreign Key (`created_by`) REFERENCES `users`(`id`) on delete CASCADE
 );
 
-select * from posts;
-select p.`id`, p.`post`, p.`publish`, u.`fullname` as `created_by`, p.`created_at`, p.`updated_at` from `posts` p join `users` u on u.id = p.`created_by` order by `id` desc limit 100;
 
-TRUNCATE posts;
+-- users_daily_tasks (templates)
+-- DROP TABLE users_daily_tasks;
+CREATE TABLE IF NOT EXISTS `users_daily_tasks` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `title` TEXT NOT NULL,
+  `description` TEXT NULL,
+  `priority` ENUM('low', 'medium', 'high') DEFAULT 'low',
+  `assigned_by` BIGINT UNSIGNED NULL,
+  `recurrence_type` ENUM('daily','weekly','once') NOT NULL DEFAULT 'daily',
+  `recurrence_weekdays` SET('mon','tue','wed','thu','fri','sat','sun') DEFAULT NULL,
+  `once_date` DATE DEFAULT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(id) ON DELETE CASCADE,
+  FOREIGN KEY (`assigned_by`) REFERENCES `users`(id) ON DELETE SET NULL,
+  INDEX idx_udt_user (user_id),
+  INDEX idx_udt_assigned_by (assigned_by),
+  INDEX idx_udt_recurrence (recurrence_type)
+);
+
+-- users_daily_task_completions
+CREATE TABLE IF NOT EXISTS `users_daily_task_completions` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `task_id` BIGINT UNSIGNED NOT NULL,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `completed_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `for_date` DATE NOT NULL,
+  `remarks` TEXT DEFAULT NULL,
+  FOREIGN KEY (`task_id`) REFERENCES users_daily_tasks(id) ON DELETE CASCADE,
+  FOREIGN KEY (`user_id`) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY ux_task_for_date (`task_id`, `for_date`, `user_id`),
+  INDEX idx_udtc_for_date (for_date),
+  INDEX idx_udtc_user (user_id)
+) 
+
+
