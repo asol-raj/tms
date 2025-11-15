@@ -1,28 +1,27 @@
 <div class="container">
     <div class="row mt-2 py-2 align-items-center">
         <div class="col-12 col-sm-3 mb-3 mb-sm-0">
-            <a href="#" class="fw-bold mb-0 fs-1 text-primary nav-link">TMS</a>
+            <span class="fw-bold mb-0 fs-1 text-primary nav-link">DAILY TASKS</span>
+            <span class="text-secondary">
+                <?= user.fullname ?>
+            </span>
         </div>
 
         <div class="col-12 col-sm-9">
-            <div class="d-flex justify-content-end align-items-center gap-5">
-
-                <span class="text-secondary me-auto me-sm-0">
-                    <?= user.fullname ?>
-                </span>
-
+            <div class="d-flex justify-content-end align-items-center gap-4">
                 <? if(user.role !== 'user'){ ?>
-                    <select name="users" id="selectUser" class="form-select" style="width: 250px;"></select>                
+                <select name="users" id="selectUser" class="form-select" style="width: 250px;"></select>
                 <? } ?>
-                
-                <a href="/auth/dashboard" class="btn btn-bd-outline-primary px-sm-5">Dashboard</a>
-                
+
+                <a href="/auth/dashboard" class="btn btn-bd-outline-primary border-2 px-sm-4">DASHBOARD</a>
+
                 <? if(user.role !== 'user'){ ?>
-                <button class="btn btn-bd-primary px-sm-5 border-2" id="createDailyTask">Create Daily Task</button>
+                <button class="btn btn-bd-primary px-sm-5 border-2" id="createDailyTask" title="Create Daily Task"><i
+                        class="bi bi-plus-lg"></i> TASK</button>
                 <? } ?>
             </div>
         </div>
-    </div>       
+    </div>
 </div>
 <hr>
 <div class="container-fluid">
@@ -40,5 +39,34 @@
     </div>
 </div>
 
+<!-- Remark Modal (reused) -->
+<div id="remarkModal" class="modal" aria-hidden="true" role="dialog" style="display:none;">
+    <div class="modal-content" role="document"
+        style="max-width:600px;margin:2rem auto;padding:1rem;border-radius:8px;background:#fff;box-shadow:0 6px 20px rgba(0,0,0,.12);">
+        <h4 id="remarkModalTitle">Add / Edit Remark</h4>
+        <form id="remarkForm">
+            <input type="hidden" id="rm_task_id" name="task_id">
+            <label for="rm_for_date">For date</label>
+            <input id="rm_for_date" name="for_date" type="date" style="width:100%;margin-bottom:.5rem;" />
+            <label for="rm_remarks">Remarks (optional)</label>
+            <textarea id="rm_remarks" name="remarks" rows="5" maxlength="2000" style="width:100%;"></textarea>
+
+            <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.5rem;">
+                <button type="button" id="rm_cancel" class="btn btn-secondary">Cancel</button>
+                <button type="submit" id="rm_save" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Custom context menu -->
+<div id="taskContextMenu"
+    style="position:fixed;display:none;z-index:9999;background:#fff;border:1px solid #ddd;border-radius:4px;box-shadow:0 6px 18px rgba(0,0,0,.12);">
+    <div class="ctx-item" data-action="add-remark" style="padding:.5rem 1rem;cursor:pointer;">Add / Edit Remark</div>
+    <div class="ctx-item" data-action="view-remark" style="padding:.5rem 1rem;cursor:pointer;">View Remark</div>
+</div>
+
+
 <input type="hidden" name="user_id" id="userId" value="<?=user.id ?>">
 <script type="module" src="/js/dailytasks.js"></script>
+<!-- <script type="module" src="/js/completetasks.js"></script> -->

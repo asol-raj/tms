@@ -6,6 +6,8 @@ import inlineEditAdvance from './_utils/inlineEditAdvance.js';
 
 import attachEditableControls from './_utils/flyoutmenu.js';
 
+// Wait for the document to be ready
+
 document.addEventListener('DOMContentLoaded', async () => {
     loadData();
     loadPosts();

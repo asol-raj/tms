@@ -1,20 +1,19 @@
 <div class="container-lg">
     <div class="row mt-2 py-2 align-items-center">
         <div class="col-12 col-sm-3 mb-3 mb-sm-0">
-            <a href="/" class="fw-bold mb-0 fs-1 text-primary nav-link">TMS</a>
+            <span class="fw-bold mb-0 fs-1 text-primary nav-link">TMS</span>
+            <span class="text-secondary"> <?= user.fullname ?> </span>
         </div>
 
         <div class="col-12 col-sm-9">
             <div class="d-flex justify-content-end align-items-center gap-5">
 
+                <a href="/auth/daily/tasks" class="btn btn-bd-outline-primary px-sm-4 border-2 me-auto me-sm-0" title="View Daily Tasks List">DAILY TASKS</a>
                 <? if(user.role !== 'user'){ ?>
-                <!-- <button class="btn btn-bd-primary px-sm-5 create-daily-task border-2 me-auto me-sm-0">Create Daily Task</button> -->
-                <button class="btn btn-bd-primary px-sm-5 create-task border-2 me-auto me-sm-0">Create Task</button>
+                <button class="btn btn-bd-primary px-sm-5 create-task border-2" title="Create A New Task"><i class="bi bi-plus-lg"></i> TASK</button>
                 <? } ?>
 
-                <span class="text-secondary">
-                    <?= user.fullname ?>
-                </span>
+                
 
                 <div class="dropdown">
                     <div class="d-flex justify-content-center align-items-center dropdown-toggle"
@@ -28,7 +27,7 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><span class="dropdown-item" role="button" id="updateProfile">Profile</span></li>
                         <li><span class="dropdown-item" role="button" id="changePwd">Change Password</span></li>
-                        <li><span class="dropdown-item" role="button" id="viewPosts">View Posts</span></li>
+                        <li><span class="dropdown-item disabled" role="button" id="viewPosts">Show Posts</span></li>
                         <li><a class="dropdown-item" href="/auth/daily/tasks">Daily Tasks</a></li>
 
                         <? if(user.role === 'admin'){ ?>
@@ -66,19 +65,10 @@
         </div>
         <!-- rgb(184, 255, 251) -->
         <div class="col-3 updates bg-light-subtle" id="rightSide">
-            <!-- <h5 class="my-4 py-2 rounded text-bg-light text-center" style="--bs-light-rgb: 184, 255, 251;">Latest
-                Updates!</h5>
-            <form class="posts d-none" id="creaetPost">
-                <textarea name="post" id="postMsg" class="form-control mb-3" rows="4"
-                    placeholder="Post New Updates Here"></textarea>
-                <button type="submit" class="btn btn-bd-outline-primary w-100">Post</button>
-            </form>
-            <div class="view-posts mt-4 max-vh-70 overflow-auto"></div> -->
-
             <div class="postsfeeds">
                 <div class="d-flex justify-content-between align-items-center position-relative">
                     <h4 class="mb-0">Posts & Feeds</h4>
-                    <button class="btn-close" id="hidePosts" title="Hide Posts & Feeds"></button>
+                    <button class="btn-close" id="togglePosts" title="Hide Posts & Feeds"></button>
                     <!-- <p>Scroll down to see the floating button.</p> -->
                 </div>
 
@@ -108,7 +98,8 @@
             </div>
 
             <? if(user.role !== 'user'){ ?>
-            <button id="showPostFormBtn" class="btn btn-primary btn-lg rounded-circle position-fixed bottom-0 end-0 m-4" type="button" title="Show Create New Post">
+            <button id="showPostFormBtn" class="btn btn-primary btn-lg rounded-circle position-fixed bottom-0 end-0 m-4"
+                type="button" title="Show Create New Post">
                 <i class="bi bi-plus-lg"></i>
             </button>
             <? } ?>
@@ -152,8 +143,34 @@
 
         /* Prevents text selection on double click */
         user-select: none;
-    }   
+    }
 
+    /* --- Default State (Sidebar Visible) --- */
+
+    #leftSide {
+        /* Your default 'col-9' styles */
+        width: 75%;
+        transition: width 0.3s ease;
+        /* Bonus: nice animation */
+    }
+
+    #rightSide {
+        /* Your default 'col-3' styles */
+        width: 25%;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    /* --- Toggled State (Sidebar Hidden) --- */
+
+    body.sidebar-hidden #leftSide {
+        /* Your 'col-12' styles */
+        width: 100%;
+    }
+
+    body.sidebar-hidden #rightSide {
+        display: none;
+    }
 </style>
 
 <script src="/_libs/flatpickr.js"></script>
@@ -164,14 +181,21 @@
 <script>
     // Alias jQuery to 'jq' to match your code style
     const jq = jQuery.noConflict();
-    jq('#hidePosts').on('click', ()=>{
-        jq("#rightSide").addClass('d-none');
-        jq('#leftSide').removeClass('col-9').addClass('col-12');
-    })
+    // jq('#hidePosts').on('click', () => {
+    //     jq("#rightSide").addClass('d-none');
+    //     jq('#leftSide').removeClass('col-9').addClass('col-12');
+    //     jq('#viewPosts').removeClass('disabled');
+    // })
 
-    jq('#viewPosts').on('click', ()=>{
-        jq('#leftSide').removeClass('col-12').addClass('col-9');
-        jq("#rightSide").removeClass('d-none');
-    })
-    
+    // jq('#viewPosts').on('click', () => {
+    //     jq('#leftSide').removeClass('col-12').addClass('col-9');
+    //     jq("#rightSide").removeClass('d-none');
+    //     jq('#viewPosts').addClass('disabled');
+    // })
+
+    jq('#togglePosts, #viewPosts').on('click', () => {
+        jq('body').toggleClass('sidebar-hidden');
+        jq('#viewPosts').toggleClass('disabled');
+    });
+
 </script>

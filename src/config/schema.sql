@@ -12,7 +12,7 @@ WITH
 GRANT OPTION;
 -- REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'user_tms'@'%';
 
-DROP Table if EXISTS tasks, user_profile, users;
+DROP Table if EXISTS users_daily_task_completions, users_daily_tasks, task_remarks, POSTS, tasks, user_profile, users;
 
 SHOW tables;
 
@@ -136,11 +136,21 @@ CREATE TABLE IF NOT EXISTS `users_daily_task_completions` (
   `completed_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `for_date` DATE NOT NULL,
   `remarks` TEXT DEFAULT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `deleted_at` DATETIME NULL,
   FOREIGN KEY (`task_id`) REFERENCES users_daily_tasks(id) ON DELETE CASCADE,
   FOREIGN KEY (`user_id`) REFERENCES users(id) ON DELETE CASCADE,
   UNIQUE KEY ux_task_for_date (`task_id`, `for_date`, `user_id`),
   INDEX idx_udtc_for_date (for_date),
   INDEX idx_udtc_user (user_id)
-) 
+);
+
+ALTER TABLE users_daily_task_completions
+  ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1,
+  ADD COLUMN deleted_at DATETIME NULL;
+
+-- TRUNCATE TABLE users_daily_task_completions;
+select * from users_daily_task_completions;
+
 
 

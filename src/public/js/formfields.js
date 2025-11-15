@@ -179,5 +179,11 @@ export default {
         updated_at: { type: 'hidden' }     // optional
     },
 
+    task_completion_remark: {
+        rm_for_date: { label: 'For Date', type: 'date', required: true },
+        rm_remarks: { label: 'Remarks', type: 'textarea', required: true },
+        rm_task_id: { type: 'hidden'},
+    }
+
 
 }

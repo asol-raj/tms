@@ -76,15 +76,18 @@ export function showMenu(cell, optionsObject, callback) {
 
         let displayText;
         let colorStyles = {};
+        // console.log(optionData);
 
         if (typeof optionData === 'object' && optionData !== null) {
             displayText = optionData.text;
 
             if (optionData.bgColor) colorStyles.bgColor = optionData.bgColor;
             if (optionData.textColor) colorStyles.textColor = optionData.textColor;
+            // if (optionData.class) colorStyles.class = optionData.class;
 
             if (colorStyles.bgColor) option.style.backgroundColor = colorStyles.bgColor;
             if (colorStyles.textColor) option.style.color = colorStyles.textColor;
+            // if (colorStyles.class) option.className = colorStyles.class;
         } else {
             displayText = optionData;
         }

@@ -119,9 +119,7 @@ export const listTasksForUser = async (req, res) => {
 
 export const listDailyTasksForAllUsers = async (req, res) => {
   try {
-    log('ok')
-    // const user_id = req.params.user_id;
-    const rows = await model.listDailyTasksForAllUsers(); log(rows);
+    const rows = await model.listDailyTasksForAllUsers(); //log(rows);
     return res.json({ tasks: rows });
   } catch (err) {
     console.error('listTasksForUser err', err);
@@ -142,7 +140,7 @@ export const completeTask = async (req, res) => {
     const for_date = req.body.for_date || (new Date()).toISOString().slice(0,10);
     const remarks = req.body.remarks || null;
 
-    const completion = await model.markComplete({ task_id, user_id, for_date, remarks });
+    const completion = await model.markComplete({ task_id, user_id, for_date, remarks }); log(completion);
     return res.json({ completion });
   } catch (err) {
     console.error('completeTask err', err);
@@ -154,11 +152,11 @@ export const completeTask = async (req, res) => {
 export const undoComplete = async (req, res) => {
   try {
     const task_id = req.params.id;
-    const user_id = req.body.user_id || req.user?.id;
+    const user_id = req.body.user_id || req.user?.id; log(user_id);
     if (!user_id) return res.status(400).json({ error: 'user_id required' });
 
     const for_date = req.body.for_date || (new Date()).toISOString().slice(0,10);
-    const ok = await model.undoComplete({ task_id, user_id, for_date });
+    const ok = await model.undoComplete({ task_id, user_id, for_date }); log(ok);
     return res.json({ success: ok });
   } catch (err) {
     console.error('undoComplete err', err);

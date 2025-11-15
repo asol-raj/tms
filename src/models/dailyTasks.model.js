@@ -127,7 +127,7 @@ export const deleteTask = async (id) => {
   return res.affectedRows > 0;
 };
 
-export const listTasksForUser = async (user_id) => {
+export const listTasksForUser_ = async (user_id) => {
   const [rows] = await pool.query(`
     SELECT
         udt.id,
@@ -152,8 +152,82 @@ export const listTasksForUser = async (user_id) => {
     [user_id]);
   return rows;
 };
+export const listTasksForUser = async (user_id) => {
+  const [rows] = await pool.query(`
+    SELECT
+      udt.id,
+      udt.title,
+      udt.description,
+      udt.priority,
+      a.fullname AS assigned_by,
+      udt.recurrence_type,
+      udt.recurrence_weekdays,
+      DATE_FORMAT(udt.once_date, '%m-%d-%Y') AS once_date,
+      udt.is_active,
+      DATE_FORMAT(udt.created_at, '%m-%d-%Y') AS created_at,
+
+      -- completion info for TODAY (server date)
+      CASE WHEN c.id IS NOT NULL THEN 1 ELSE 0 END AS is_completed,
+      c.id AS completion_id,
+      c.remarks AS completion_remarks,
+      DATE_FORMAT(c.completed_at, '%Y-%m-%d %T') AS completion_at
+
+    FROM users_daily_tasks udt
+    JOIN users u ON u.id = udt.user_id
+    LEFT JOIN users a ON a.id = udt.assigned_by
+
+    -- left join to today's active completion by the task owner
+    LEFT JOIN users_daily_task_completions c
+      ON c.task_id = udt.id
+      AND c.user_id = udt.user_id
+      AND c.for_date = CURDATE()
+      AND c.is_active = 1
+
+    WHERE udt.user_id = ? AND udt.is_active = TRUE
+    ORDER BY FIELD(udt.priority, 'high', 'medium', 'low'), udt.id
+  `, [user_id]);
+  return rows;
+};
+
 
 export const listDailyTasksForAllUsers = async () => {
+  const [rows] = await pool.query(`
+    SELECT
+      udt.id,
+      u.fullname AS user,
+      udt.title,
+      udt.description,
+      udt.priority,
+      a.fullname AS assigned_by,
+      udt.recurrence_type,
+      udt.recurrence_weekdays,
+      DATE_FORMAT(udt.once_date, '%m-%d-%Y') AS once_date,
+      udt.is_active,
+      DATE_FORMAT(udt.created_at, '%m-%d-%Y') AS created_at,
+
+      -- completion info for TODAY (server date) for each task owner
+      CASE WHEN c.id IS NOT NULL THEN 1 ELSE 0 END AS is_completed,
+      c.id AS completion_id,
+      c.user_id AS completion_user_id,
+      c.remarks AS completion_remarks,
+      DATE_FORMAT(c.completed_at, '%Y-%m-%d %T') AS completion_at
+
+    FROM users_daily_tasks udt
+    JOIN users u ON u.id = udt.user_id
+    LEFT JOIN users a ON a.id = udt.assigned_by
+
+    LEFT JOIN users_daily_task_completions c
+      ON c.task_id = udt.id
+      AND c.user_id = udt.user_id
+      AND c.for_date = CURDATE()
+      AND c.is_active = 1
+
+    ORDER BY udt.id DESC
+  `, []);
+  return rows;
+};
+
+export const listDailyTasksForAllUsers_ = async () => {
   const [rows] = await pool.query(`
     SELECT
         udt.id,
@@ -179,7 +253,7 @@ export const listDailyTasksForAllUsers = async () => {
 /*
   COMPLETIONS (users_daily_task_completions)
 */
-export const markComplete = async ({ task_id, user_id, for_date, remarks }) => {
+export const markComplete_ = async ({ task_id, user_id, for_date, remarks }) => {
   const sql = `
     INSERT INTO users_daily_task_completions (task_id, user_id, for_date, remarks)
     VALUES (?, ?, ?, ?)
@@ -191,8 +265,35 @@ export const markComplete = async ({ task_id, user_id, for_date, remarks }) => {
   return rows[0] || null;
 };
 
-export const undoComplete = async ({ task_id, user_id, for_date }) => {
+export const markComplete = async ({ task_id, user_id, for_date, remarks }) => {
+  const sql = `
+    INSERT INTO users_daily_task_completions (task_id, user_id, for_date, remarks, is_active)
+    VALUES (?, ?, ?, ?, 1)
+    ON DUPLICATE KEY UPDATE
+      completed_at = CURRENT_TIMESTAMP,
+      remarks = VALUES(remarks),
+      is_active = 1,
+      deleted_at = NULL
+  `;
+  const params = [task_id, user_id, for_date, remarks || null];
+  await pool.query(sql, params);
+  const [rows] = await pool.query(
+    `SELECT * FROM users_daily_task_completions WHERE task_id = ? AND user_id = ? AND for_date = ? LIMIT 1`,
+    [task_id, user_id, for_date]
+  );
+  return rows[0] || null;
+};
+
+export const undoComplete_ = async ({ task_id, user_id, for_date }) => {
   const [res] = await pool.query(`DELETE FROM users_daily_task_completions WHERE task_id = ? AND user_id = ? AND for_date = ?`, [task_id, user_id, for_date]);
+  return res.affectedRows > 0;
+};
+
+export const undoComplete = async ({ task_id, user_id, for_date }) => {
+  const sql = `UPDATE users_daily_task_completions
+               SET is_active = 0, deleted_at = CURRENT_TIMESTAMP
+               WHERE task_id = ? AND user_id = ? AND for_date = ?`;
+  const [res] = await pool.query(sql, [task_id, user_id, for_date]);
   return res.affectedRows > 0;
 };
 
@@ -200,3 +301,5 @@ export const getCompletionsForDate = async ({ user_id, for_date }) => {
   const [rows] = await pool.query(`SELECT * FROM users_daily_task_completions WHERE user_id = ? AND for_date = ?`, [user_id, for_date]);
   return rows;
 };
+
+
