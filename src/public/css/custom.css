@@ -1,4 +1,10 @@
 /* Styles for the single, global flyout menu */
+mark.highlight-mark {
+    background: #fff176;
+    padding: 0 0.12rem;
+    border-radius: 2px;
+}
+
 .status-flyout-menu {
     position: absolute;
     display: none;
@@ -22,7 +28,7 @@
 }
 
 .status-flyout-option:last-child {
-  margin-bottom: 0;
+    margin-bottom: 0;
 }
 
 .status-flyout-option:hover {

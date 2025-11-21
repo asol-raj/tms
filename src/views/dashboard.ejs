@@ -1,4 +1,4 @@
-<div class="container-lg">
+<div class="container-fluid">
     <div class="row mt-2 py-2 align-items-center">
         <div class="col-12 col-sm-3 mb-3 mb-sm-0">
             <span class="fw-bold mb-0 fs-1 text-primary nav-link" title="Task Mamagement System">TMS</span>
@@ -17,11 +17,14 @@
                             d="M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
                     </svg>
                 </div> -->
+                <input type="search" name="search" id="searchTask" placeholder="Search tasks..." class="form-control"
+                    style="width: clamp(250px, 20vw, 450px);">
+                <div class="vr"></div>
                 <button class="btn btn-bd-outline-sunset px-md-5 border-2 position-relative" id="viewPosts"><i
                         class="bi bi-cup-hot-fill"></i> FEEDS
                     <span
                         class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success text-white"
-                        id="newPosts">+11 <span class="visually-hidden">unread messages</span></span>
+                        id="newPosts"><span class="visually-hidden">unread messages</span></span>
                 </button>
                 <a href="/auth/daily/tasks" class="btn btn-bd-outline-primary px-md-4 border-2 me-auto me-sm-0"
                     title="View Daily Tasks List"><i class="bi bi-view-list"></i> DAILY TASKS</a>
@@ -75,7 +78,8 @@
                     class="btn btn-outline-danger px-lg-5 border-2 filter-btn fw-semibold archived d-none">Archived</button>
             </div>
 
-            <div class="dataTable table-responsive" id="dataTable"></div>
+            <!-- <div class="dataTable table-responsive" id="dataTable"></div> -->
+            <div class="dataTable table-responsive max-vh-80" id="dataTable"></div>
 
         </div>
         <!-- rgb(184, 255, 251) -->
@@ -135,6 +139,12 @@
 </div>
 
 <style>
+    /* mark.highlight-mark {
+        background: #fff176;
+        padding: 0 0.12rem;
+        border-radius: 2px;
+    } */
+
     /* .filter-buttons .filter-btn.active {
         transform: scale(1.05);
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);

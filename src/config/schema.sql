@@ -149,6 +149,8 @@ CREATE TABLE IF NOT EXISTS `posts` (
   CONSTRAINT `fk_posts_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE
 );
 
+-- SELECT COUNT(*) as cnt FROM posts WHERE 
+
 -- DROP TABLE tasks_list, user_task_assignments;
 -- ======================
 -- New: tasks_list (task templates / master list for recurring daily/weekly/once tasks)

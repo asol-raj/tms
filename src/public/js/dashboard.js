@@ -5,12 +5,27 @@ import showModal from './_utils/modal.js';
 import inlineEditAdvance from './_utils/inlineEditAdvance.js';
 
 import attachEditableControls from './_utils/flyoutmenu.js';
+import { applySearch } from './_utils/searchTools.js';
+import applySearchWithObserver from './_utils/searchToolsAdvance.js';
 
 // Wait for the document to be ready
+
+async function countFeeds(){
+    try {
+        let sql = "SELECT COUNT(*) AS cnt FROM posts WHERE DATE(created_at) = CURDATE();";
+        let res = await advanceMysqlQuery({ key: 'na', qry: sql }); log(res.data);
+        let cnt = res?.data[0].cnt || 0;
+        let pst = cnt ? `+${cnt}`: 0; log(pst);
+        jq('#newPosts').html(pst);
+    } catch (error) {
+        log(error);
+    }
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     loadData();
     loadPosts();
+    
 
     // --- Selectors ---
     const $formContainer = jq('#createPostContainer');
@@ -218,6 +233,7 @@ async function loadPosts() {
         });
 
         jq('div.view-posts').html($div);
+        countFeeds();
 
     } catch (error) {
         log(error);
@@ -228,10 +244,7 @@ async function loadPosts() {
 let currentFilter = 'all'; // global tracker
 
 async function loadData(statusFilter = null) {
-    try {
-        let role = await fetchData('/auth/userrole');
-        if (role !== 'user') jq('button.archived, #creaetPost').removeClass('d-none');
-        // If no filter is passed, use the current active one
+    try {        // If no filter is passed, use the current active one
         currentFilter = statusFilter || currentFilter;
 
         // Build URL with optional query
@@ -251,12 +264,33 @@ async function loadData(statusFilter = null) {
             `);
             return; // 🔁 exit the function
         }
-        let arr = res.data;
-        let tbl = createTable({ data: arr });
+        const data = res.data;
 
+        // const controller = applySearchWithObserver('#searchTask', data, ['title', 'description', 'assigned_to'], setTable, {
+        //     wait: 200,
+        //     tableSelector: '#dataTable', // or 'div.dataTable' if that's your container
+        //     restoreOnInit: true
+        // }); log(controller);
+
+        applySearch('#searchTask', data, ['title', 'description', 'assigned_to'], setTable, { tableSelector: '#dataTable' })
+        // setTable(data);
+
+    } catch (error) {
+        log(error);
+    }
+}
+
+async function setTable(data) {
+    try {
+        const $dataTbl = jq('#dataTable');
+        const tbl = createTable({ data });
         const $table = jq(tbl.table);
         const $tbody = jq(tbl.tbody);
         const $thead = jq(tbl.thead);
+
+        let role = await fetchData('/auth/userrole');
+        if (role !== 'user') jq('button.archived, #creaetPost').removeClass('d-none');
+
 
         // Format status text
         $tbody.find(`[data-key="status"], [data-key="priority"]`).each((i, e) => {
@@ -265,12 +299,14 @@ async function loadData(statusFilter = null) {
 
         initAdvancedTable($table, {
             filterableKeys: [
+                { key: "title", value: 'Title', width: '', title: '' },
                 { key: "priority", value: 'Priority', width: '', title: '' },
                 { key: "created_by", value: 'Created By', width: '', title: '' },
                 { key: "assigned_to", value: 'Assigned To', width: '', title: '' },
             ]
         })
 
+        $dataTbl.html($table[0]);
         addColumnBorders($table);
         titleCaseTableHeaders($thead);
         inlineEditAdvance($tbody, {
@@ -345,12 +381,12 @@ async function loadData(statusFilter = null) {
         }, () => role !== 'user');
 
         $tbody.find(`[data-key="id"]`).each((i, e) => {
-            if (role === 'user' && !arr[i].assigned_to) {
+            if (role === 'user' && !data[i].assigned_to) {
                 return
             };
 
             jq(e).addClass('text-primary role-btn').on('click', () => {
-                let id = arr[i].id;
+                let id = data[i].id;
                 if (role !== 'user') {
                     createFlyoutMenu(e, [
                         { key: 'Edit Task', id: 'editTask' },
@@ -374,25 +410,25 @@ async function loadData(statusFilter = null) {
         })
 
         $tbody.find(`[data-key="remarks"]`).each(function (i, e) {
-            if (!arr[i].assigned_to) return;
+            if (!data[i].assigned_to) return;
             jq(e).on('dblclick', () => {
-                let id = arr[i].id;
+                let id = data[i].id;
                 addEditRemarks(id);
             })
             e.title = 'Double Click to ADD/EDIT Remarks!'
         })
 
         $tbody.find(`[data-key="comments"]`).each(function (i, e) {
-            if (!arr[i].assigned_to) return;
+            if (!data[i].assigned_to) return;
             jq(e).on('dblclick', () => {
-                let id = arr[i].id;
+                let id = data[i].id;
                 addEditComments(id);
             })
             e.title = 'Double Click to ADD/EDIT Comments!'
         })
 
-        jq('div.dataTable').html(tbl.table);
-
+        // jq('div.dataTable').html(tbl.table);
+        // jq('#dataTable').html(tbl.table);
     } catch (error) {
         log(error);
     }

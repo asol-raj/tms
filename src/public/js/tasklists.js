@@ -1,9 +1,44 @@
 import createAdvanceForm from './_utils/advanceCreateFrom.js';
 import attachEditableControls from './_utils/flyoutmenu.js';
-import { addColumnBorders, advanceMysqlQuery, createFlyoutMenu, createTable, fetchData, hideTableColumns, inlineEditBox, jq, log, postData, setTableColumnWidths, titleCaseTableHeaders, toTitleCase } from './help.js';
+import { applySearch } from './_utils/searchTools.js';
+import { addColumnBorders, advanceMysqlQuery, createFlyoutMenu, createTable, fetchData, hideTableColumns, initAdvancedTable, inlineEditBox, jq, log, postData, setTableColumnWidths, titleCaseTableHeaders, toTitleCase } from './help.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
+
+    // jq('#searchCustomer').on('input', async (e) => {
+    //     let q = e.target.value.trim(); //log(q);
+    //     if (!q.length) {
+    //         jq('div.dataTable').html('');
+    //         return;
+    //     }
+    //     try {
+    //         jq('div.dataTable').html('').text('Searching...');
+    //         const rows = await searchCustomers(q);
+    //         if (!rows.data.length) {
+    //             jq('div.dataTable').html('');
+    //             return;
+    //         }
+    //         let tbl = createTableNew({ data: rows.data });
+    //         const $table = jq(tbl.table);
+    //         const $tbody = jq(tbl.tbody);
+    //         const $thead = jq(tbl.thead);
+
+    //         titleCaseTableHeaders($thead);
+    //         addColumnBorders($table);
+
+    //         jq('div.dataTable').html(tbl.table);
+
+    //         $table.find('tbody td').each(function () {
+    //             const cellText = jq(this).text();
+    //             jq(this).html(highlight(cellText, q));
+    //         });
+    //     } catch (error) {
+    //         log(error);
+    //     }
+    // }).on('blur', (e) => {
+    //     if (!e.target.value) jq('div.dataTable').html('');
+    // })
 
     jq('#createDailyTask').on('click', () => {
         const $modal = createAdvanceForm({
@@ -29,10 +64,21 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 })
 
+const highlight = (text, query) => {
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'gi');
+    return text.replace(regex, match => `<span class="text-primary fw-semibold">${match}</span>`);
+};
+
+// $table.find('tbody td').each(function () {
+//     const cellText = jq(this).text();
+//     jq(this).html(highlight(cellText, q));
+// });
+
 async function loadData() {
     try {
         const rows = await fetchData('/auth/tasklist/api/'); //log(rows);
-        const data = rows?.data || [];
+        const data = rows?.data || []; //log(data);
         const $dataTbl = jq('#dataTable');
 
         if (!data.length) {
@@ -45,17 +91,27 @@ async function loadData() {
             return; // 🔁 exit the function
         }
 
+        applySearch('#searchTask', data, ['title', 'description', 'assigned_to'], setTable, { tableSelector: '#dataTable' })
+
+    } catch (error) {
+        log(error);
+    }
+}
+
+function setTable(data) {
+    try {
+        const $dataTbl = jq('#dataTable');
         const tbl = createTable({ data });
         const $table = jq(tbl.table);
         const $tbody = jq(tbl.tbody);
-        const $thead = jq(tbl.thead);                
+        const $thead = jq(tbl.thead);
 
         inlineEditBox($tbody, 'description', async (value, cell, $row) => {
             const id = $row.find(`[data-key="id"]`).data('value');
             const payload = {
                 table: 'tasks_list',
                 field: 'description',
-                value, 
+                value,
                 id
             }
             await fetch('/auth/inline/edit', {
@@ -172,15 +228,26 @@ async function loadData() {
             // 4. Update the inner HTML of the current element
             jq(this).html(resultString);
         });
-       
+
         // const desc = $table.find(`[data-key="description"]`)[0];
         // desc.style.setProperty('width', '250px', 'important');
 
         $dataTbl.html($table[0]);
+
         setTableColumnWidths($table, [
             { key: 'description', width: 350 },
             { key: 'assigned_to', width: 200 }
         ])
+
+        initAdvancedTable($table, {
+            filterableKeys: [
+                { key: 'title', value: 'Title', title: 'Task Title', width: '', class: '' },
+                { key: 'description', value: 'Description', title: 'Description', width: '', class: '' },
+                { key: 'priority', value: 'Priority', title: 'Priority', width: '', class: '' },
+                { key: 'created_by', value: 'Created By', title: 'Created By', width: '', class: '' },
+                { key: 'updated_by', value: 'Updated By', title: 'Updated By', width: '', class: '' },
+            ]
+        })
 
         addColumnBorders($table);
         titleCaseTableHeaders($thead, [], ['id']);
@@ -342,6 +409,12 @@ async function loadData() {
 
             })
         })
+
+
+        // $table.find('tbody td').each(function () {
+        //     const cellText = jq(this).text();
+        //     jq(this).html(highlight(cellText, q));
+        // });
 
     } catch (error) {
         log(error);

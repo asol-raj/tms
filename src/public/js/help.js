@@ -451,7 +451,7 @@ export function initAdvancedTable(selector, options = {}, callBack = null) {
   const settings = $.extend(
     {
       filterableKeys: [],
-      persist: true,
+      persist: false,
       enableSorting: true,
       enableKeyboard: true
     },

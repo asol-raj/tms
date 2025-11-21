@@ -1,5 +1,5 @@
 <div id="alert-container"></div>
-<div class="container-xl">
+<div class="container-fluid">
     <div class="row mt-2 py-2 align-items-center">
         <div class="col-12 col-md-3 mb-3 mb-md-0">
             <a href="/auth/tasklist" class="fw-bold mb-0 fs-1 text-primary nav-link">TASKS LIST</a>
@@ -11,7 +11,7 @@
         <div class="col-12 col-md-9">
             <div class="d-flex justify-content-between justify-content-md-end align-items-center gap-2">
                 <!-- <input type="date" name="" id="inputDate" class="form-control me-auto me-md-0" style="width: 180px;"> -->
-
+                <input type="search" name="search" id="searchTask" placeholder="Search tasks..." class="form-control me-4" style="width: clamp(250px, 20vw, 450px);">
                 <? if(user.role !== 'user'){ ?>
                 <!-- <select name="users" id="selectUser" class="form-select" style="width: 180px;"></select> -->
                 <? } ?>
@@ -27,9 +27,20 @@
         </div>
     </div>
 </div>
-    <hr>
+<hr>
 <div class="container-fluid">
     <div class="dataTable table-responsive max-vh-80" id="dataTable"></div>
+</div>
+
+<div id="filterDropdown" class="position-absolute border bg-white p-2 rounded shadow small d-print-none"
+    style="display:none; z-index:1050; width:250px; max-height:300px;" tabindex="-1">
+    <input type="text" class="form-control form-control-sm mb-2" id="filterSearch" placeholder="Search..." />
+    <div id="filterItems" class="overflow-auto" style="max-height:180px;"></div>
+    <div class="d-flex justify-content-between gap-1 mt-2">
+        <button class="btn btn-sm btn-outline-secondary me-auto" id="clearFilter">Clear</button>
+        <button class="btn btn-sm btn-outline-secondary" id="applyFilter">Apply</button>
+        <button class="btn btn-sm btn-outline-secondary" id="cancelFilter">Cancel</button>
+    </div>
 </div>
 
 <script type="module" src="/js/tasklists.js"></script>
