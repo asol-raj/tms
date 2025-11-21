@@ -7,7 +7,7 @@ import os from 'os';
 import ejs from 'ejs';
 import { fileURLToPath } from 'url'; // 1. Added for __dirname
 import expressEjsLayouts from 'express-ejs-layouts'; // 2. Imported module
-import router from './src/routes/router.js'; // 3. Imported router (note the .js)
+import router from './src/routes/_router.js'; // 3. Imported router (note the .js)
 
 // Run config for dotenv
 dotenv.config();

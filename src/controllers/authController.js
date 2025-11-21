@@ -23,7 +23,6 @@ export const registerUser = async (req, res) => {
             });
         }
 
-
         // 3. Call the model to create the user
         // The model (User.create) handles password hashing, transactions,
         // and checking for duplicate emails/usernames.

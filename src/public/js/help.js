@@ -114,6 +114,11 @@ export function fd2obj(form) {
   return obj;
 }
 
+export function hideTableColumns($table, columns = []) {
+  if (!columns.length) return;
+  columns.forEach(c => $table.find(`[data-key="${c}"]`).addClass('d-none'));
+}
+
 export async function loadSQL(filename) {
   const response = await fetch(`/_sql/${filename}`);
   if (!response.ok) throw new Error(`Failed to load SQL file: ${filename}`);
@@ -359,6 +364,32 @@ export function createTable({
 
   // Return an object containing references to the created elements
   return { table, tbody, thead, tfoot, data };
+}
+
+/**
+ * Apply width to multiple table columns using data-key attributes.
+ *
+ * @param {jQuery} $table - jQuery table element
+ * @param {Array} configs - Array of { key: string, width: string|number }
+ */
+export function setTableColumnWidths($table, configs = []) {
+    if (!$table || !$table.length) return;
+
+    configs.forEach(cfg => {
+        const { key, width } = cfg;
+        if (!key || !width) return;
+
+        const $col = $table.find(`[data-key="${key}"]`);
+        if ($col.length === 0) return;
+
+        $col.each(function () {
+            // Convert number to px if needed
+            const w = typeof width === 'number' ? `${width}px` : width;
+
+            this.style.setProperty('width', w, 'important');
+            // this.style.setProperty('min-width', w, 'important'); // needed for table cells
+        });
+    });
 }
 
 
@@ -1268,7 +1299,7 @@ export function createFormAdvance({
     const disabledAttr = config.disabled ? 'disabled' : '';
     const readOnlyAttr = (config.readonly || config.readOnly) ? 'readonly' : '';
     const blankOption = config.blank || false; //log(blankOption);
-    const multiSelect = config.multiple? 'multiple': '';
+    const multiSelect = config.multiple ? 'multiple' : '';
 
     let fieldHtml = '';
     const invalidHtml = invalidfb ? `<div class="invalid-feedback ${name}">${invalidfb}</div>` : `<div class="invalid-feedback ${name}"></div>`;
@@ -1827,4 +1858,114 @@ export function createFlyoutMenu(triggerElement, items, handlerMap = {}, rowData
     }
   };
   setTimeout(() => document.addEventListener("click", handleClickOutside), 0);
+}
+
+
+export function inlineEditBox($tbody, colname, callback) {
+
+  // Create flyout once
+  if (!document.getElementById('inlineFlyout')) {
+    const fly = document.createElement('div');
+    fly.id = 'inlineFlyout';
+    fly.className = 'card shadow p-2';
+    fly.style.position = 'absolute';
+    fly.style.zIndex = 9999;
+    fly.style.display = 'none';
+    fly.style.width = '350px';
+    fly.innerHTML = `
+      <textarea id="if_text" class="form-control mb-2" rows="4"></textarea>
+      <div class="text-end">
+        <button id="if_cancel" class="btn btn-secondary btn-sm me-1">Cancel</button>
+        <button id="if_save" class="btn btn-primary btn-sm">Save</button>
+      </div>
+    `;
+    document.body.appendChild(fly);
+  }
+
+  const fly = document.getElementById('inlineFlyout');
+  const ta = document.getElementById('if_text');
+  const btnCancel = document.getElementById('if_cancel');
+  const btnSave = document.getElementById('if_save');
+
+  let activeCell = null;
+  let closeHandlers = [];
+
+  // reposition flyout
+  function position(cell) {
+    const r = cell.getBoundingClientRect();
+    const fw = fly.offsetWidth;
+    const fh = fly.offsetHeight;
+    const px = window.pageXOffset;
+    const py = window.pageYOffset;
+
+    let left = r.right + 8;
+    if (left + fw > window.innerWidth - 10)
+      left = r.left - fw - 8;
+
+    let top = r.top + py;
+    if (top + fh > window.innerHeight + py - 10)
+      top = window.innerHeight + py - fh - 10;
+
+    fly.style.left = left + 'px';
+    fly.style.top = top + 'px';
+  }
+
+  // close flyout
+  function close() {
+    fly.style.display = 'none';
+    activeCell = null;
+    closeHandlers.forEach(fn => fn());
+    closeHandlers = [];
+  }
+
+  // open flyout for a cell
+  function open(cell) {
+    activeCell = cell;
+
+    ta.value = cell.dataset.value || cell.textContent.trim();
+    fly.style.display = 'block';
+
+    position(cell);
+    ta.focus();
+
+    // close when clicking outside
+    const docHandler = (ev) => {
+      if (!fly.contains(ev.target) && ev.target !== cell) close();
+    };
+    document.addEventListener('mousedown', docHandler);
+
+    // close on scroll/resize
+    const srHandler = () => position(cell);
+    window.addEventListener('scroll', srHandler, true);
+    window.addEventListener('resize', srHandler);
+
+    closeHandlers.push(() => {
+      document.removeEventListener('mousedown', docHandler);
+      window.removeEventListener('scroll', srHandler, true);
+      window.removeEventListener('resize', srHandler);
+    });
+  }
+
+  // SAVE
+  btnSave.onclick = () => {
+    if (!activeCell) return;
+    const value = ta.value.trim();
+
+    // update UI
+    activeCell.textContent = value;
+    activeCell.dataset.value = value;
+
+    // return value to caller
+    callback(value, activeCell, jq(activeCell).closest('tr'));
+
+    close();
+  };
+
+  // CANCEL
+  btnCancel.onclick = close;
+
+  // Attach click handler
+  $tbody.on('click', `[data-key="${colname}"]`, function () {
+    open(this);
+  });
 }

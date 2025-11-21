@@ -50,8 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             log(error);
         }
-    })
-
+    });
 
     jq('#updateProfile').on('click', async () => {
         const res = await fetchData('/auth/user/profile'); //log(res.profile); return;

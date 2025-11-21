@@ -5,43 +5,43 @@ import * as model from '../models/dailyTasks.model.js';
 // Helper: get weekday short string from date (JS Date or YYYY-MM-DD)
 const weekdayShort = (d) => {
   const dt = (typeof d === 'string') ? new Date(d + 'T00:00:00') : d;
-  return ['sun','mon','tue','wed','thu','fri','sat'][dt.getDay()];
+  return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][dt.getDay()];
 };
 
 // GET /tasks/today?date=YYYY-MM-DD
-export const getTodayTasks = async (req, res) => {
-  try {
-    const user_id = req.user?.id || parseInt(req.query.user_id, 10);
-    if (!user_id) return res.status(400).json({ error: 'user_id required' });
+// export const getTodayTasks = async (req, res) => {
+//   try {
+//     const user_id = req.user?.id || parseInt(req.query.user_id, 10);
+//     if (!user_id) return res.status(400).json({ error: 'user_id required' });
 
-    const date = req.query.date || (new Date()).toISOString().slice(0,10); // YYYY-MM-DD
-    const w = weekdayShort(date);
+//     const date = req.query.date || (new Date()).toISOString().slice(0,10); // YYYY-MM-DD
+//     const w = weekdayShort(date);
 
-    const sql = `
-      SELECT udt.*,
-             CASE WHEN udc.id IS NOT NULL THEN 1 ELSE 0 END AS is_completed,
-             udc.completed_at, udc.remarks
-      FROM users_daily_tasks udt
-      LEFT JOIN users_daily_task_completions udc
-        ON udc.task_id = udt.id
-        AND udc.for_date = ?
-        AND udc.user_id = ?
-      WHERE udt.is_active = 1
-        AND udt.user_id = ?
-        AND (
-             udt.recurrence_type = 'daily'
-             OR (udt.recurrence_type = 'weekly' AND FIND_IN_SET(?, udt.recurrence_weekdays))
-             OR (udt.recurrence_type = 'once' AND udt.once_date = ?)
-        )
-      ORDER BY FIELD(udt.priority,'high','medium','low'), udt.id
-    `;
-    const [rows] = await model.pool.query(sql, [date, user_id, user_id, w, date]);
-    return res.json({ date, tasks: rows });
-  } catch (err) {
-    console.error('getTodayTasks err', err);
-    return res.status(500).json({ error: 'Internal error' });
-  }
-};
+//     const sql = `
+//       SELECT udt.*,
+//              CASE WHEN udc.id IS NOT NULL THEN 1 ELSE 0 END AS is_completed,
+//              udc.completed_at, udc.remarks
+//       FROM users_daily_tasks udt
+//       LEFT JOIN users_daily_task_completions udc
+//         ON udc.task_id = udt.id
+//         AND udc.for_date = ?
+//         AND udc.user_id = ?
+//       WHERE udt.is_active = 1
+//         AND udt.user_id = ?
+//         AND (
+//              udt.recurrence_type = 'daily'
+//              OR (udt.recurrence_type = 'weekly' AND FIND_IN_SET(?, udt.recurrence_weekdays))
+//              OR (udt.recurrence_type = 'once' AND udt.once_date = ?)
+//         )
+//       ORDER BY FIELD(udt.priority,'high','medium','low'), udt.id
+//     `;
+//     const [rows] = await model.pool.query(sql, [date, user_id, user_id, w, date]);
+//     return res.json({ date, tasks: rows });
+//   } catch (err) {
+//     console.error('getTodayTasks err', err);
+//     return res.status(500).json({ error: 'Internal error' });
+//   }
+// };
 
 // POST /tasks  (create template)
 export const createTask = async (req, res) => {
@@ -131,16 +131,16 @@ export const listDailyTasksForAllUsers = async (req, res) => {
   completions
 */
 // POST /tasks/:id/complete  body: { for_date, remarks, user_id (optional) }
-export const completeTask = async (req, res) => {
+export const completeTask = async (req, res) => { log('134')
   try {
-    const task_id = req.params.id;
-    const user_id = req.body.user_id || req.user?.id;
+    const task_list_id = req.params.id;
+    const user_id = req.user?.id;
     if (!user_id) return res.status(400).json({ error: 'user_id required' });
 
-    const for_date = req.body.for_date || (new Date()).toISOString().slice(0,10);
+    const for_date = req.body.for_date || (new Date()).toISOString().slice(0, 10); 
     const remarks = req.body.remarks || null;
 
-    const completion = await model.markComplete({ task_id, user_id, for_date, remarks }); log(completion);
+    const completion = await model.markComplete({ task_list_id, user_id, for_date, remarks }); 
     return res.json({ completion });
   } catch (err) {
     console.error('completeTask err', err);
@@ -151,15 +151,122 @@ export const completeTask = async (req, res) => {
 // POST /tasks/:id/undo_complete  body: { for_date, user_id (optional) }
 export const undoComplete = async (req, res) => {
   try {
-    const task_id = req.params.id;
+    const task_list_id = req.params.id;
     const user_id = req.body.user_id || req.user?.id; log(user_id);
     if (!user_id) return res.status(400).json({ error: 'user_id required' });
 
-    const for_date = req.body.for_date || (new Date()).toISOString().slice(0,10);
-    const ok = await model.undoComplete({ task_id, user_id, for_date }); log(ok);
+    const for_date = req.body.for_date || (new Date()).toISOString().slice(0, 10);
+    const ok = await model.undoComplete({ task_list_id, user_id, for_date }); log(ok);
     return res.json({ success: ok });
   } catch (err) {
     console.error('undoComplete err', err);
     return res.status(500).json({ error: 'Internal error' });
+  }
+};
+
+// NEW: generalized handler for any date (was previously getTodayTasks)
+export const getTodayTasks = async (req, res) => {
+  try {
+    const user_id = req.user?.id || parseInt(req.query.user_id, 10);
+    if (!user_id) return res.status(400).json({ error: 'user_id required' });
+
+    const date = req.query.date || (new Date()).toISOString().slice(0, 10); // YYYY-MM-DD
+    const w = weekdayShort(date);
+
+    const tasks = await model.getTasksForDate({ user_id, for_date: date, weekday: w });
+    return res.json({ date, tasks });
+  } catch (err) {
+    console.error('getTodayTasks err', err);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+};
+
+// NEW: GET /auth/daily/tasks/date/:date  (optional query user_id= for admin)
+export const getTasksByDate = async (req, res) => {
+  try {
+    const date = req.params.date || req.query.date;
+    if (!date) return res.status(400).json({ error: 'date required (YYYY-MM-DD)' });
+
+    const user_id = req.query.user_id || req.user?.id;
+    if (!user_id) return res.status(400).json({ error: 'user_id required' });
+
+    const w = weekdayShort(date);
+    const tasks = await model.getTasksForDate({ user_id, for_date: date, weekday: w });
+    return res.json({ date, tasks });
+  } catch (err) {
+    console.error('getTasksByDate err', err);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+};
+
+// NEW: GET /auth/daily/tasks/date/:date/all  (admin view across users)
+export const listTasksByDateForAllUsers = async (req, res) => {
+  try {
+    const date = req.params.date || req.query.date;
+    if (!date) return res.status(400).json({ error: 'date required (YYYY-MM-DD)' });
+
+    const w = weekdayShort(date);
+    const tasks = await model.listTasksForDateForAllUsers({ for_date: date, weekday: w });
+    return res.json({ date, tasks });
+  } catch (err) {
+    console.error('listTasksByDateForAllUsers err', err);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+};
+
+
+// Put this in your 'routes' or 'controllers' file
+// Assume 'authMiddleware' is your middleware that adds 'req.user'
+// and 'getTasks' is imported from your model file.
+
+export const getAllTasks = async (req, res) => {
+  try {
+    const { user } = req; //log(user) // The authenticated user from your middleware
+
+    // Get filters from query string (e.g., /api/tasks?date=2025-11-17&userId=5)
+    const {
+      user_id,         // Admin only: filter by a specific user
+      date,           // Optional: 'YYYY-MM-DD'
+      includeInactive = true // Admin only: 'true'
+    } = req.query; //log('req.query', req.query);
+
+    // --- 1. Build the options object for the model ---
+    const options = {
+      requestingUser: user, // Pass the authenticated user for security
+    };
+
+    // --- 2. Add Admin-Only Filters ---
+    if (user.role === 'admin') {
+      if (user_id) {
+        options.userId = parseInt(user_id, 10);
+      }
+      if (includeInactive === 'true') {
+        options.includeInactive = true;
+      }
+    }
+
+    // --- 3. Add Date Filters ---
+    if (date) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
+      }
+
+      options.forDate = date;
+
+      // Auto-calculate weekday from the date
+      // This is more robust than requiring the client to send it
+      const dayMap = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const d = new Date(date + 'T12:00:00'); // Use noon to avoid timezone/DST issues
+      options.weekday = dayMap[d.getDay()];
+    }
+    // log(options);
+
+    // --- 4. Call the unified model ---
+    const tasks = await model.getTasks(options); //log(tasks);
+    res.json({ tasks });
+
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+    res.status(500).json({ error: 'An error occurred while fetching tasks.' });
   }
 };

@@ -31,7 +31,7 @@ class User {
       const userSql = `
         INSERT INTO users 
           (email, password_hash, username, fullname, user_role) 
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (LOWER(?), ?, LOWER(?), ?, ?)
       `;
       const [userResult] = await connection.query(userSql, [
         email,

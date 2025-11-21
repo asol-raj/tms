@@ -2,7 +2,7 @@
 
 // src/controllers/selectController.js
 import { pool, runMysql, readFileContent, log } from '../config/db.js';
-import { Queries } from './querys.js';
+import { Queries } from './_querys.js';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';

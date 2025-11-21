@@ -1,19 +1,34 @@
 <div class="container-lg">
     <div class="row mt-2 py-2 align-items-center">
         <div class="col-12 col-sm-3 mb-3 mb-sm-0">
-            <span class="fw-bold mb-0 fs-1 text-primary nav-link">TMS</span>
-            <span class="text-secondary"> <?= user.fullname ?> </span>
+            <span class="fw-bold mb-0 fs-1 text-primary nav-link" title="Task Mamagement System">TMS</span>
+            <span class="text-secondary">
+                <?= user.fullname ?>
+            </span>
         </div>
 
         <div class="col-12 col-sm-9">
             <div class="d-flex justify-content-end align-items-center gap-5">
-
-                <a href="/auth/daily/tasks" class="btn btn-bd-outline-primary px-sm-4 border-2 me-auto me-sm-0" title="View Daily Tasks List">DAILY TASKS</a>
+                <!-- <div class="position-relative py-2 px-4 text-bg-secondary border border-secondary rounded-pill">
+                    Marker <svg width="1em" height="1em" viewBox="0 0 16 16"
+                        class="position-absolute top-100 start-50 translate-middle mt-1" fill="var(--bs-secondary)"
+                        xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path
+                            d="M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                    </svg>
+                </div> -->
+                <button class="btn btn-bd-outline-sunset px-md-5 border-2 position-relative" id="viewPosts"><i
+                        class="bi bi-cup-hot-fill"></i> FEEDS
+                    <span
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success text-white"
+                        id="newPosts">+11 <span class="visually-hidden">unread messages</span></span>
+                </button>
+                <a href="/auth/daily/tasks" class="btn btn-bd-outline-primary px-md-4 border-2 me-auto me-sm-0"
+                    title="View Daily Tasks List"><i class="bi bi-view-list"></i> DAILY TASKS</a>
                 <? if(user.role !== 'user'){ ?>
-                <button class="btn btn-bd-primary px-sm-5 create-task border-2" title="Create A New Task"><i class="bi bi-plus-lg"></i> TASK</button>
+                <button class="btn btn-bd-primary px-md-5 create-task border-2" title="Create A New Task"><i
+                        class="bi bi-plus-lg"></i> TASK</button>
                 <? } ?>
-
-                
 
                 <div class="dropdown">
                     <div class="d-flex justify-content-center align-items-center dropdown-toggle"
@@ -27,7 +42,7 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><span class="dropdown-item" role="button" id="updateProfile">Profile</span></li>
                         <li><span class="dropdown-item" role="button" id="changePwd">Change Password</span></li>
-                        <li><span class="dropdown-item disabled" role="button" id="viewPosts">Show Posts</span></li>
+                        <!-- <li><span class="dropdown-item disabled" role="button">Show Posts</span></li> -->
                         <li><a class="dropdown-item" href="/auth/daily/tasks">Daily Tasks</a></li>
 
                         <? if(user.role === 'admin'){ ?>
@@ -181,6 +196,7 @@
 <script>
     // Alias jQuery to 'jq' to match your code style
     const jq = jQuery.noConflict();
+    jq('body').addClass('sidebar-hidden')
     // jq('#hidePosts').on('click', () => {
     //     jq("#rightSide").addClass('d-none');
     //     jq('#leftSide').removeClass('col-9').addClass('col-12');
@@ -195,7 +211,7 @@
 
     jq('#togglePosts, #viewPosts').on('click', () => {
         jq('body').toggleClass('sidebar-hidden');
-        jq('#viewPosts').toggleClass('disabled');
+        // jq('#viewPosts').toggleClass('disabled');
     });
 
 </script>

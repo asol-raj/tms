@@ -200,7 +200,7 @@ export default function createForm(schema, opts = {}) {
     if (typeof onSubmit === 'function') {
       e.preventDefault(); e.stopPropagation();
       try {
-        const result = await onSubmit(form.$api, e);
+        const result = await onSubmit(form.$api, e); console.log(result);
         showSuccess(typeof result === 'object' && result?.message ? result.message : 'Form submitted successfully.');
       } catch (err) {
         showError(err?.message || 'Submission failed.');

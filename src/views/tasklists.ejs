@@ -1,0 +1,35 @@
+<div id="alert-container"></div>
+<div class="container-xl">
+    <div class="row mt-2 py-2 align-items-center">
+        <div class="col-12 col-md-3 mb-3 mb-md-0">
+            <a href="/auth/tasklist" class="fw-bold mb-0 fs-1 text-primary nav-link">TASKS LIST</a>
+            <span class="text-secondary">
+                <?= user.fullname ?>
+            </span>
+        </div>
+
+        <div class="col-12 col-md-9">
+            <div class="d-flex justify-content-between justify-content-md-end align-items-center gap-2">
+                <!-- <input type="date" name="" id="inputDate" class="form-control me-auto me-md-0" style="width: 180px;"> -->
+
+                <? if(user.role !== 'user'){ ?>
+                <!-- <select name="users" id="selectUser" class="form-select" style="width: 180px;"></select> -->
+                <? } ?>
+
+                <a href="/auth/dashboard" class="btn btn-bd-outline-primary border-2 px-md-4">DASHBOARD</a>
+                <a href="/auth/daily/tasks" class="btn btn-bd-outline-primary border-2 px-md-4">DAILY TASKS</a>
+
+                <? if(user.role !== 'user'){ ?>
+                <button class="btn btn-bd-primary px-md-4 border-2" id="createDailyTask" title="Create Daily Task"><i
+                        class="bi bi-plus-lg"></i> TASK</button>
+                <? } ?>
+            </div>
+        </div>
+    </div>
+</div>
+    <hr>
+<div class="container-fluid">
+    <div class="dataTable table-responsive max-vh-80" id="dataTable"></div>
+</div>
+
+<script type="module" src="/js/tasklists.js"></script>

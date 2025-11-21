@@ -9,8 +9,8 @@ export default {
     },
 
     tasks: {
-        title: { label: 'Title', type: 'text', required: true },
-        description: { label: 'Description', type: 'textarea', required: false },
+        title: { label: 'Task Title', type: 'text', required: true },
+        description: { label: 'Task Description', type: 'textarea', required: false },
         priority: {
             label: 'Priority', type: 'select', options: [
                 { id: 'low', value: 'Low' },
@@ -23,10 +23,20 @@ export default {
     },
 
     create_user: {
-        username: { label: 'Username', type: 'text', case: 'lower', helptext: 'Must be Unique with Minimum 3 letters long!' },
+        username: { label: 'Username', type: 'text', case: 'lower', helptext: 'Lowercase Unique with Minimum 3 letters long!' },
         fullname: { label: 'Full Name', type: 'text', required: true },
         email: { label: 'Email', type: 'email', required: true, case: 'lower' },
         password: { label: 'Password', type: 'text', default: 'cfc@123', required: true, helptext: 'Must be 6 letters long' },
+        // confirm_pwd: { label: 'Confirm Password', type: 'password', required: true, },
+        userrole: { label: 'User Role', type: 'select', options: [{ id: 'admin', value: 'Admin' }, { id: 'manager', value: 'Manager' }, { id: 'user', value: 'User' }], default: 'user', required: true },
+        // is_active: { label: 'Is Active', type: 'select', options: [{ id: '1', value: 'Yes' }, { id: '0', value: 'No' }], default: 1, required: true },
+    },
+
+    register: {
+        username: { label: 'Username', type: 'text', case: 'lower', message: 'Lowercase Unique with Minimum 3 letters long!' },
+        fullname: { label: 'Full Name', type: 'text', required: true },
+        email: { label: 'Email', type: 'email', required: true, case: 'lower' },
+        password: { label: 'Password', type: 'text', default: 'cfc@123', required: true, message: 'Must be 6 letters long' },
         // confirm_pwd: { label: 'Confirm Password', type: 'password', required: true, },
         userrole: { label: 'User Role', type: 'select', options: [{ id: 'admin', value: 'Admin' }, { id: 'manager', value: 'Manager' }, { id: 'user', value: 'User' }], default: 'user', required: true },
         // is_active: { label: 'Is Active', type: 'select', options: [{ id: '1', value: 'Yes' }, { id: '0', value: 'No' }], default: 1, required: true },
@@ -108,15 +118,15 @@ export default {
             blank: false
         },
 
-        assigned_by: {
-            label: 'Assigned By',
-            type: 'select',
-            // typically the current admin/manager; you can populate same way as user_id
-            query: "select id, fullname as value from users where is_active = true and user_role != 'user';",
-            required: false,
-            blank: true,
-            message: 'Who assigned this task (optional)'
-        },
+        // assigned_by: {
+        //     label: 'Assigned By',
+        //     type: 'select',
+        //     // typically the current admin/manager; you can populate same way as user_id
+        //     query: "select id, fullname as value from users where is_active = true and user_role != 'user';",
+        //     required: false,
+        //     blank: true,
+        //     message: 'Who assigned this task (optional)'
+        // },
 
         recurrence_type: {
             label: 'Recurrence',
@@ -175,14 +185,102 @@ export default {
 
         // hidden meta fields
         id: { type: 'hidden' },            // for updates
-        created_at: { type: 'hidden' },    // optional
-        updated_at: { type: 'hidden' }     // optional
     },
 
+    newTasklist: {      
+
+        title: {
+            label: 'Title',
+            type: 'text',
+            required: true,
+            message: 'Short descriptive title'
+        },
+
+        description: {
+            label: 'Description',
+            type: 'textarea',
+            required: false,
+            message: 'Optional details / instructions'
+        },
+
+        priority: {
+            label: 'Priority',
+            type: 'select',
+            options: [
+                { id: 'low', value: 'Low' },
+                { id: 'medium', value: 'Medium' },
+                { id: 'high', value: 'High' }
+            ],
+            default: 'low',
+            required: true,
+            blank: false
+        },      
+
+        recurrence_type: {
+            label: 'Recurrence',
+            type: 'select',
+            options: [
+                { id: 'daily', value: 'Daily' },
+                { id: 'weekly', value: 'Weekly (specific weekdays)' },
+                { id: 'weekends', value: 'WeekEnds Only (saturday & sunday)' },
+                { id: 'weekdays', value: 'WeekDays (monday To friday)' },
+                { id: 'once', value: 'Once (specific date)' },
+            ],
+            default: 'daily',
+            required: true,
+            message: 'Choose whether this is a daily task, weekly on selected weekdays, or a one-off'
+        },
+
+        // For weekly: use a multi-select or checkbox group in the UI.
+        // createFrom should return an array like ['mon','wed','fri'] or a comma string 'mon,wed,fri'.
+        recurrence_weekdays: {
+            label: 'Weekdays',
+            type: 'select', // or 'checkbox-group' depending on your form renderer
+            options: [
+                { id: 'mon', value: 'Mon' },
+                { id: 'tue', value: 'Tue' },
+                { id: 'wed', value: 'Wed' },
+                { id: 'thu', value: 'Thu' },
+                { id: 'fri', value: 'Fri' },
+                { id: 'sat', value: 'Sat' },
+                { id: 'sun', value: 'Sun' }
+            ],
+            required: false,
+            multiple: true,
+            blank: true,
+            message: 'Select weekdays for weekly recurrence (leave blank if daily)'
+        },
+
+        // For once: pick a date
+        once_date: {
+            label: 'Once Date',
+            type: 'date',
+            required: false,
+            blank: true,
+            message: 'Select date for one-time tasks'
+        },
+
+        is_active: {
+            label: 'Is Active',
+            type: 'select',
+            options: [
+                { id: '1', value: 'Yes' },
+                { id: '0', value: 'No' }
+            ],
+            default: 1,
+            required: true
+        },
+
+        // hidden meta fields
+        id: { type: 'hidden' },            // for updates
+    },
+
+    
+
     task_completion_remark: {
-        rm_for_date: { label: 'For Date', type: 'date', required: true },
-        rm_remarks: { label: 'Remarks', type: 'textarea', required: true },
-        rm_task_id: { type: 'hidden'},
+        for_date: { label: 'Task Completed On', type: 'date', required: true },
+        remarks: { label: 'Any Remarks', type: 'textarea', required: true },
+        task_id: { type: 'hidden'},
     }
 
 

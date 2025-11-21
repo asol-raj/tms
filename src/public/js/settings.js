@@ -1,3 +1,4 @@
+import createAdvanceForm from './_utils/advanceCreateFrom.js';
 import createForm from './_utils/createForm.esm.js';
 import attachEditableControls from './_utils/flyoutmenu.js';
 import inlineEditAdvance from './_utils/inlineEditAdvance.js';
@@ -9,7 +10,11 @@ document.addEventListener('DOMContentLoaded', (e) => {
 
     jq('#register').on('click', async (e) => {
         try {
-            const form = createForm(formfields.create_user, {
+            const $modal = createAdvanceForm({
+                title: 'register',
+                // formObj: formfields.create_user,
+                hideFooter: true,
+                floatingLabels: false,
                 modal: true,
                 modalTitle: 'User Registration',
                 modalSize: 'md',
@@ -17,38 +22,48 @@ document.addEventListener('DOMContentLoaded', (e) => {
                 colbreak: 10,
                 onSubmit: async (api) => {
                     try {
-                        const vals = api.values(); //log(vals); //return;
-                        let { email, password, fullname, username, userrole } = vals
-                        const response = await fetch('/register', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                email,
-                                password,
-                                fullname: fullname || null,
-                                username: username || null, // Send null if empty
-                                userrole: userrole || 'user'
-                            }),
-                        });
-                        const data = await response.json();
-                        if (response.ok) {
-                            // Registration successful
-                            api.showSuccess('Registration successful! You can now log in.');
+                        log(api);
+                        let res = await axios.post('/register', api.values); log(res);
+                        api.onSuccess('User Registered Successfully!');
+                        setTimeout(() => {
+                            api.close();
                             loadData();
-                            return true;
-                        } else {
-                            throw new Error(data?.message || 'Failed to create User.');
-                        }
+                        }, 800);
+                        // const vals = api.values(); //log(vals); //return;
+                        // let { email, password, fullname, username, userrole } = vals
+                        // const response = await fetch('/register', {
+                        //     method: 'POST',
+                        //     headers: {
+                        //         'Content-Type': 'application/json',
+                        //     },
+                        //     body: JSON.stringify({
+                        //         email,
+                        //         password,
+                        //         fullname: fullname || null,
+                        //         username: username || null, // Send null if empty
+                        //         userrole: userrole || 'user'
+                        //     }),
+                        // });
+                        // const data = await response.json();
+                        // if (response.ok) {
+                        //     // Registration successful
+                        //     api.showSuccess('Registration successful! You can now log in.');
+                        //     loadData();
+                        //     return true;
+                        // } else {
+                        //     throw new Error(data?.message || 'Failed to create User.');
+                        // }
+
                     } catch (error) {
-                        api.showError(error.message || 'Unexpected error occurred.');
+                        api.onError(error.message || 'Unexpected error occurred.');
                         console.error(error);
                         throw error; // ensures form stays open
                     }
                 }
             });
 
+            // $mb.data('bs.modal').show();
+            $modal.data('bs.modal').show();
 
         } catch (error) {
             log(error);
@@ -83,12 +98,31 @@ async function loadData() {
             jq(e).on('click', () => {
                 let { id, is_active, username, email, fullname, user_role } = arr[i];
                 createFlyoutMenu(e, [
-                    { key: 'Edit', id: 'editUser' },
+                    // { key: 'Edit', id: 'editUser' },
                     { key: 'Reset Password', id: 'resetPwd' },
                     { key: 'Cancel' }
                 ]);
 
-                jq('#editUser').on('click', async () => {
+                jq('#editUser').on('click', async()=>{
+                    let mb = createAdvanceForm({
+                        title: 'user',
+                        formData: arr[i],
+                        hideFooter: true,
+                        floatingLabels: false,
+                        modal: true,
+                        modalTitle: `Edit User (${arr[i].fullname})`,
+                        onSubmit: async(api)=>{
+                            try {
+                                // let res = await axios
+                            } catch (error) {
+                                
+                            }                            
+                        }
+                    })
+                })
+
+
+                jq('#editUser1').on('click', async () => {
                     let $modal = showModal('Edit User', 'md', true);
                     // Destructure initial data for cleaner access
                     // const { id, is_active, username, fullname, email, user_role } = arr[i];
