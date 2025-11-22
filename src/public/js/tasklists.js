@@ -403,7 +403,7 @@ function setTable(data) {
 
                 jq('#deleteTask').on('click', async () => {
                     const role = await fetchData('/auth/userrole');
-                    if(role==='user') {
+                    if (role === 'user') {
                         alert('Restricted!');
                         return;
                     }
@@ -413,6 +413,58 @@ function setTable(data) {
                     loadData();
                 })
             })
+        })
+
+        $tbody.find(`[data-key="assigned_to"]`).each((i, e) => {
+            let $span = jq('<span>').addClass('role-btn float-end').html(`<i class="bi bi-three-dots-vertical"></i>`);
+            jq(e).append($span[0]);
+            $span.on('click', () => {
+                const id = data[i].id;
+                const $modal = createAdvanceForm({
+                    title: null,
+                    formObj: {
+                        assigned_to: { label: 'Assigned To', type: 'select', options: [], multiple: true, requird: true, message: 'You can select Multiple Users!' }
+                    },
+                    modal: true,
+                    modalTitle: 'Assign Task to Users',
+                    modalSize: 'md',
+                    submitBtnText: 'Assign',
+                    hideFooter: true,
+                    floatingLabels: false,
+                    onLoad: async (api) => {
+                        try {
+                            let res = await advanceMysqlQuery({
+                                key: 'na',
+                                qry: "SELECT u.`id`, u.`fullname` as `value` FROM `users` u LEFT JOIN `user_task_assignments` ta ON ta.user_id = u.id AND ta.`task_list_id` = ? WHERE ta.`user_id` IS NULL AND u.`is_active` = 1 AND u.`user_role` = 'user';",
+                                values: [id]
+                            });
+                            api.appendOptions('assigned_to', res.data);
+                        } catch (error) {
+                            log(error);
+                        }
+                    },
+                    onSubmit: async (api) => {
+                        try {
+                            const payload = {
+                                taskListId: id,
+                                userFilter: {
+                                    id_list: api.values.assigned_to
+                                }
+                            };
+                            let res = await axios.post('/auth/assignments/assign', payload);
+                            api.onSuccess('Users Assigned Successfully!');
+                            setTimeout(() => {
+                                api.close();
+                                loadData();
+                            }, 800);
+                        } catch (error) {
+                            log(error);
+                        }
+                    }
+                });
+
+                $modal.data('bs.modal').show();
+            }).prop('title', 'Click to Assign A User to this Task!')
         })
 
         // $table.find('tbody td').each(function () {
