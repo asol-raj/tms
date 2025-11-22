@@ -241,6 +241,7 @@ function setTable(data) {
 
         initAdvancedTable($table, {
             filterableKeys: [
+                // { key: 'id', value: 'ID', title: 'ID', width: '', class: '' },
                 { key: 'title', value: 'Title', title: 'Task Title', width: '', class: '' },
                 { key: 'description', value: 'Description', title: 'Description', width: '', class: '' },
                 { key: 'priority', value: 'Priority', title: 'Priority', width: '', class: '' },
@@ -401,15 +402,18 @@ function setTable(data) {
                 })
 
                 jq('#deleteTask').on('click', async () => {
+                    const role = await fetchData('/auth/userrole');
+                    if(role==='user') {
+                        alert('Restricted!');
+                        return;
+                    }
                     let cnf = confirm('Are you sure you want to delete this task?\n\nIt is recommended not to delete tasks; instead, you can simply mark them as inactive.');
                     if (!cnf) return;
                     await axios.delete('/auth/tasklist/delete/' + id);
                     loadData();
                 })
-
             })
         })
-
 
         // $table.find('tbody td').each(function () {
         //     const cellText = jq(this).text();

@@ -8,10 +8,13 @@ import fs from 'fs';
 import os from 'os';
 import { fileURLToPath } from 'url'; // 1. Added for __dirname
 import pkg from 'node-sql-parser';
+import * as ExcelJS from 'exceljs';
+
 const { Parser } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const parser = new Parser();
+
 
 
 /**
@@ -258,5 +261,115 @@ export async function createPost(req, res){
     res.status(400).json({ ok: false, error: err.message });
   }
 }
+
+// bulkUpload.js
+
+// Assume your database pool is exported like this from src/config/db.js
+// import { pool } from './src/config/db.js'; // Adjust path as necessary
+
+/**
+ * Bulk uploads task list records from an Excel file into the database.
+ * The function assumes a basic structure where the first row of the Excel 
+ * sheet contains headers matching some of the database column names.
+ *
+ * @param {string} filePath - The absolute or relative path to the Excel file.
+ * @param {bigint | null} createdByUserId - The user ID to assign as `created_by`.
+ * @returns {Promise<{success: boolean, message: string, insertedCount: number}>}
+ */
+export async function bulkUploadTasks(filePath, createdByUserId) {
+    let conn;
+    try {
+        // --- 1. Read and Parse the Excel File ---
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.readFile(filePath);
+
+        // Assuming the data is in the first sheet
+        const worksheet = workbook.getWorksheet(1);
+        
+        if (!worksheet) {
+            return { success: false, message: 'Worksheet not found in the Excel file.', insertedCount: 0 };
+        }
+
+        const recordsToInsert = [];
+        
+        // Define mapping/defaults and skip the first row (headers)
+        // Adjust column indices based on your Excel file structure
+        worksheet.eachRow((row, rowNumber) => {
+            if (rowNumber === 1) { // Skip header row
+                return; 
+            }
+
+            const rowValues = row.values;
+
+            // Mapping Excel columns to DB columns (adjust indices as needed)
+            const title = rowValues[1] ? String(rowValues[1]).trim() : null;
+            const description = rowValues[2] ? String(rowValues[2]).trim() : null;
+            // Use defaults if values are not provided or invalid
+            const priority = rowValues[3] ? String(rowValues[3]).toLowerCase().trim() : 'low';
+            const recurrence_type = rowValues[4] ? String(rowValues[4]).toLowerCase().trim() : 'daily';
+            const recurrence_weekdays = rowValues[5] ? String(rowValues[5]).toLowerCase().trim() : null; // e.g., 'mon,tue,wed'
+            const once_date = rowValues[6] || null; // ExcelJS might return a Date object
+
+            // Only proceed if a title is present
+            if (title) {
+                recordsToInsert.push([
+                    title,
+                    description,
+                    priority,
+                    recurrence_type,
+                    recurrence_weekdays,
+                    once_date,
+                    createdByUserId,
+                    createdByUserId, // updated_by on creation
+                ]);
+            }
+        });
+
+        if (recordsToInsert.length === 0) {
+            return { success: true, message: 'No valid records found in the Excel file to insert.', insertedCount: 0 };
+        }
+
+        // --- 2. Bulk Insert into Database ---
+        conn = await pool.getConnection();
+
+        const sql = `
+            INSERT INTO tasks_list 
+            (title, description, priority, recurrence_type, recurrence_weekdays, once_date, created_by, updated_by) 
+            VALUES ?
+        `;
+
+        // The mysql2 library handles the array of arrays for bulk insertion
+        const [result] = await conn.query(sql, [recordsToInsert]);
+
+        return { 
+            success: true, 
+            message: `Successfully inserted ${result.affectedRows} tasks.`, 
+            insertedCount: result.affectedRows 
+        };
+
+    } catch (error) {
+        console.error('Error during bulk task upload:', error);
+        return { success: false, message: `Database or file error: ${error.message}`, insertedCount: 0 };
+    } finally {
+        if (conn) conn.release();
+    }
+}
+
+// --- Example Usage ---
+/*
+async function main() {
+    // You would typically get the file path from a file upload handler (e.g., Express middleware like 'multer')
+    const excelFilePath = './path/to/your/tasks.xlsx'; 
+    const uploaderId = 1; // Example user ID
+
+    console.log(`Starting bulk upload for file: ${excelFilePath}`);
+
+    const result = await bulkUploadTasks(excelFilePath, uploaderId);
+
+    console.log(result);
+}
+
+main();
+*/
 
 

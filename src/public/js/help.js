@@ -445,7 +445,7 @@ export const LS = {
 };
 
 
-export function initAdvancedTable(selector, options = {}, callBack = null) {
+export function initAdvancedTable_(selector, options = {}, callBack = null) {
   const ns = ".advTable"; // namespace for events
 
   const settings = $.extend(
@@ -608,6 +608,380 @@ export function initAdvancedTable(selector, options = {}, callBack = null) {
     rows.sort((a, b) => {
       const A = jq(a).children("td").eq(idx).text().toUpperCase();
       const B = jq(b).children("td").eq(idx).text().toUpperCase();
+      return asc ? (A > B ? 1 : A < B ? -1 : 0) : (A < B ? 1 : A > B ? -1 : 0);
+    });
+
+    jq.each(rows, (_, row) => $table.children("tbody").append(row));
+    if (!suppressState && settings.persist && storageKey) saveState();
+  }
+
+  // Apply filters
+  function applyFilters() {
+    const $headersNow = $table.find("thead th");
+    $table.find("tbody tr").each(function () {
+      const $row = jq(this);
+      let visible = true;
+      for (let key in filterState) {
+        const idx = $headersNow.filter(`[data-key="${key}"]`).index();
+        const cellVal = $row.children("td").eq(idx).text().trim();
+        if (filterState[key].length && !filterState[key].includes(cellVal)) {
+          visible = false;
+          break;
+        }
+      }
+      $row.toggle(visible);
+    });
+  }
+
+  // Save state
+  function saveState() {
+    localStorage.setItem(storageKey, JSON.stringify({ filters: filterState, sort: sortState }));
+  }
+
+  // Global handlers
+  jq(document).on("click" + ns, function () {
+    jq("#filterDropdown").hide();
+    jq("#filterItems").empty();
+  });
+
+  jq("#filterDropdown").on("click" + ns, e => e.stopPropagation());
+
+  jq("#filterSearch").on("input" + ns, function () {
+    const term = jq(this).val().toLowerCase();
+    jq("#filterItems .form-check").each(function () {
+      const label = jq(this).text().toLowerCase();
+      if (!jq(this).find("input").attr("id").startsWith("selectAllFilter")) {
+        jq(this).toggle(label.includes(term));
+      }
+    });
+  });
+
+  jq(document).on("change" + ns, "#selectAllFilter", function () {
+    jq("#filterItems .filter-check:visible").prop("checked", this.checked);
+  });
+
+  jq("#clearFilter").on("click" + ns, function () {
+    const key = jq("#filterDropdown").data("key");
+    delete filterState[key];
+    applyFilters();
+    if (callBack) callBack();
+    if (settings.persist && storageKey) saveState();
+    jq("#filterDropdown").hide();
+    jq("#filterItems").empty();
+  });
+
+  jq("#cancelFilter").on("click" + ns, function () {
+    jq("#filterDropdown").hide();
+    jq("#filterItems").empty();
+  });
+
+  jq("#applyFilter").on("click" + ns, function () {
+    const key = jq("#filterDropdown").data("key");
+    const $checked = jq(`.filter-check[data-key="${key}"]:checked:visible`);
+    filterState[key] = $checked.map(function () {
+      return jq(this).val();
+    }).get();
+
+    const totalOptions = jq(`.filter-check[data-key="${key}"]`).length;
+    if (filterState[key].length === 0 || filterState[key].length === totalOptions) {
+      delete filterState[key];
+    }
+
+    applyFilters();
+    if (callBack) callBack();
+    if (settings.persist && storageKey) saveState();
+    jq("#filterDropdown").hide();
+    jq("#filterItems").empty();
+  });
+
+  // Keyboard navigation for filter list
+  if (settings.enableKeyboard) {
+    jq(document).on("keydown" + ns, ".filter-check", function (e) {
+      const $items = jq(".filter-check:visible");
+      const index = $items.index(this);
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        $items.eq((index + 1) % $items.length).focus();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        $items.eq((index - 1 + $items.length) % $items.length).focus();
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        jq(this).prop("checked", !jq(this).prop("checked"));
+      } else if (e.key === "Escape") {
+        jq("#filterDropdown").hide();
+        jq("#filterItems").empty();
+      }
+    });
+  }
+
+  return $table;
+}
+
+export function initAdvancedTable(selector, options = {}, callBack = null) {
+  const ns = ".advTable"; // namespace for events
+
+  const settings = $.extend(
+    {
+      filterableKeys: [],
+      persist: true,
+      enableSorting: true,
+      enableKeyboard: true,
+      dateCols: [],   // array of data-key names that should be sorted as dates
+      numberCols: []  // array of data-key names that should be sorted as numbers
+    },
+    options
+  );
+
+  // small helpers for parsing
+  function tryParseDate(str) {
+    if (!str && str !== 0) return NaN;
+    let s = String(str).trim();
+    if (!s) return NaN;
+
+    // Common unambiguous formats first:
+    // yyyy-mm-dd or yyyy/mm/dd
+    let m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]).getTime();
+
+    // mm/dd/yyyy or mm-dd-yyyy
+    m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (m) return new Date(+m[3], +m[1] - 1, +m[2]).getTime();
+
+    // dd Mon yyyy e.g. 01 Jan 2025
+    m = s.match(/^(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{4})$/);
+    if (m) {
+      const dd = +m[1];
+      const mon = new Date(`${m[2]} 1, 2000`).getMonth(); // hacky but works for month names
+      if (!isNaN(mon)) return new Date(+m[3], mon, dd).getTime();
+    }
+
+    // Final fallback to Date.parse (may handle other locales)
+    const parsed = Date.parse(s);
+    return isNaN(parsed) ? NaN : parsed;
+  }
+
+  function parseNumber(str) {
+    if (str === null || str === undefined) return NaN;
+    let s = String(str).trim();
+    if (s === "") return NaN;
+    // remove grouping commas and currency symbols, keep minus and decimal point
+    s = s.replace(/[,₹$€\s]/g, "").replace(/[^\d\.\-eE+]/g, "");
+    const n = parseFloat(s);
+    return isNaN(n) ? NaN : n;
+  }
+
+  // Resolve selector to a jQuery table element in the DOM
+  let $table;
+  if (selector && selector.jquery) {
+    $table = selector;
+  } else if (selector instanceof Element) {
+    $table = jq(selector);
+  } else {
+    $table = jq(selector);
+  }
+
+  if (!$table.length) {
+    console.warn("initAdvancedTable: No table found for selector:", selector);
+    return;
+  }
+
+  // Storage key for persistence
+  const storageKey = settings.persist
+    ? `tableState_${$table.attr("id") || Math.random().toString(36).substring(2)}`
+    : null;
+
+  // Unbind all previous namespaced events
+  $table.find("thead th").off(ns);
+  jq(document).off(ns);
+  jq("#filterDropdown, #filterSearch, #filterItems, #applyFilter, #clearFilter, #cancelFilter, #selectAllFilter").off(ns);
+
+  // State
+  let filterState = {};
+  let sortState = { key: null, asc: true };
+
+  // Load saved state
+  if (settings.persist && storageKey) {
+    const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+    if (saved) {
+      filterState = saved.filters || {};
+      sortState = saved.sort || { key: null, asc: true };
+    }
+  }
+
+  // Apply initial filters/sort
+  applyFilters();
+  if (sortState.key) applySort(sortState.key, sortState.asc, true);
+
+  // Build headers with sort/filter UI
+  $table.find("thead th").each(function () {
+    const $th = jq(this);
+    const key = $th.attr("data-key");
+
+    // Skip if not filterable
+    const keyObj = settings.filterableKeys.find(obj => obj.key === key);
+    if (!keyObj) return;
+
+    if (keyObj.width) {
+      this.style.setProperty("width", keyObj.width, "important");
+    }
+
+    const $keyname = jq(
+      `<span class="${key}" data-bs-toggle="tooltip" data-bs-title="${keyObj?.title}" title="${keyObj?.title}">${keyObj.value || key}</span>`
+    );
+    const $icon = jq(
+      '<span class="ms-auto sort-icon d-print-none" role="button"><i class="bi bi-arrow-down-up"></i></span>'
+    );
+    const $filterBtn = jq(
+      '<span class="text-secondary filter-toggle d-print-none" role="button"><i class="bi bi-funnel-fill"></i></span>'
+    );
+
+    const $div = jq("<div></div>")
+      .addClass("d-flex jcb aic gap-2")
+      .append($keyname, $icon, $filterBtn);
+
+    $th.html($div);
+
+    // Sorting
+    if (settings.enableSorting) {
+      $th.on("click" + ns, function (e) {
+        if (jq(e.target).closest(".filter-toggle").length) return;
+        const asc = sortState.key === key ? !sortState.asc : true;
+        sortState = { key, asc };
+        applySort(key, asc);
+        if (settings.persist && storageKey) saveState();
+        if (callBack) callBack();
+      });
+    }
+
+    // Filter dropdown
+    $filterBtn.on("click" + ns, function (e) {
+      e.stopPropagation();
+      openFilterDropdown($th, key);
+    });
+  });
+
+  // Open filter dropdown
+  function openFilterDropdown($th, key) {
+    const $headersNow = $table.find("thead th");
+    const columnIndex = $headersNow.index($th);
+    const values = new Set();
+
+    $table.find("tbody tr:visible").each(function () {
+      const val = jq(this).children("td").eq(columnIndex).text().trim();
+      values.add(val);
+    });
+
+    // Sort values according to column type
+    const sortedValues = [...values];
+    if (settings.dateCols && settings.dateCols.includes(key)) {
+      sortedValues.sort((a, b) => {
+        const ta = tryParseDate(a);
+        const tb = tryParseDate(b);
+        if (isNaN(ta) && isNaN(tb)) return String(a).localeCompare(String(b));
+        if (isNaN(ta)) return 1; // put invalid/empty at end
+        if (isNaN(tb)) return -1;
+        return ta - tb;
+      });
+    } else if (settings.numberCols && settings.numberCols.includes(key)) {
+      sortedValues.sort((a, b) => {
+        const na = parseNumber(a);
+        const nb = parseNumber(b);
+        if (isNaN(na) && isNaN(nb)) return String(a).localeCompare(String(b));
+        if (isNaN(na)) return 1;
+        if (isNaN(nb)) return -1;
+        return na - nb;
+      });
+    } else {
+      sortedValues.sort();
+    }
+
+    const $items = jq("#filterItems").empty();
+    const current = filterState[key] || [];
+    const selectAll = current.length === 0 || current.length === sortedValues.length;
+
+    $items.append(`
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="selectAllFilter" ${selectAll ? "checked" : ""}>
+                <label class="form-check-label fw-bold small" for="selectAllFilter">Select All</label>
+            </div>
+        `);
+
+    sortedValues.forEach(val => {
+      const id = `chk_${key}_${String(val).replace(/\s+/g, "_")}`;
+      const checked = selectAll || current.includes(val);
+      $items.append(`
+                <div class="form-check">
+                    <input class="form-check-input filter-check" type="checkbox" id="${id}" data-key="${key}" value="${val}" ${checked ? "checked" : ""}>
+                    <label class="form-check-label small" for="${id}">${val}</label>
+                </div>
+            `);
+    });
+
+    jq("#filterSearch").val("").focus();
+    jq("#filterDropdown").show().data("key", key);
+    positionDropdown($th);
+  }
+
+  // Position dropdown
+  function positionDropdown($th) {
+    const offset = $th.offset();
+    const tableRight = $table.offset().left + $table.width();
+    const dropWidth = 250;
+    const left =
+      offset.left + dropWidth > tableRight
+        ? offset.left - dropWidth + $th.outerWidth()
+        : offset.left;
+    jq("#filterDropdown").css({ top: offset.top + $th.outerHeight(), left });
+  }
+
+  // Apply sort
+  function applySort(key, asc, suppressState = false) {
+    const $headersNow = $table.find("thead th");
+    const idx = $headersNow.filter(`[data-key="${key}"]`).index();
+    const rows = $table.find("tbody tr").get();
+
+    const isDate = settings.dateCols && settings.dateCols.includes(key);
+    const isNumber = settings.numberCols && settings.numberCols.includes(key);
+
+    rows.sort((a, b) => {
+      const Araw = jq(a).children("td").eq(idx).text().trim();
+      const Braw = jq(b).children("td").eq(idx).text().trim();
+
+      // Date compare
+      if (isDate) {
+        const ta = tryParseDate(Araw);
+        const tb = tryParseDate(Braw);
+        const bothNaN = isNaN(ta) && isNaN(tb);
+        if (!bothNaN) {
+          // treat invalid dates as greater so they go to the end when asc
+          const cmp = (isNaN(ta) ? 1e18 : ta) - (isNaN(tb) ? 1e18 : tb);
+          return asc ? (cmp) : (-cmp);
+        }
+        // fallback to string compare if both invalid
+        const A = Araw.toUpperCase();
+        const B = Braw.toUpperCase();
+        return asc ? (A > B ? 1 : A < B ? -1 : 0) : (A < B ? 1 : A > B ? -1 : 0);
+      }
+
+      // Number compare
+      if (isNumber) {
+        const na = parseNumber(Araw);
+        const nb = parseNumber(Braw);
+        const bothNaN = isNaN(na) && isNaN(nb);
+        if (!bothNaN) {
+          const cmp = (isNaN(na) ? 1e12 : na) - (isNaN(nb) ? 1e12 : nb);
+          return asc ? (cmp) : (-cmp);
+        }
+        // fallback to string compare if both invalid
+        const A = Araw.toUpperCase();
+        const B = Braw.toUpperCase();
+        return asc ? (A > B ? 1 : A < B ? -1 : 0) : (A < B ? 1 : A > B ? -1 : 0);
+      }
+
+      // default string compare
+      const A = Araw.toUpperCase();
+      const B = Braw.toUpperCase();
       return asc ? (A > B ? 1 : A < B ? -1 : 0) : (A < B ? 1 : A > B ? -1 : 0);
     });
 

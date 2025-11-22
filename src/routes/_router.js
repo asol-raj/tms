@@ -35,9 +35,9 @@ router.get('/logout', (req, res) => {
 });
 
 router.use('/auth', authMiddleware);
-router.use('/auth/tasklist', isAdmin, taskListRoutes);
-router.use("/auth/tasklist/assignments", isAdmin, userTaskAssignmentRoutes);
-router.use("/auth/assignments", isAdmin, assignmentRoutes);
+router.use('/auth/tasklist', taskListRoutes);
+router.use("/auth/tasklist/assignments", userTaskAssignmentRoutes);
+router.use("/auth/assignments", assignmentRoutes);
 router.use("/auth/daily/tasks", dailyTaskRoutes);
 
 router.get('/403', (req, res) => res.render('403', { title: 'Access Restricted' }))

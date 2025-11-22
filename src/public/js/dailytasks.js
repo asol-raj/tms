@@ -345,12 +345,12 @@ async function loadData(url = '/auth/daily/tasks/data') {
 
         inlineEditBox($tbody, 'remarks', (value, cell, $row) => {
             const COMPLETE_URL = id => `/auth/daily/tasks/${encodeURIComponent(id)}/complete`;
-            const payload = { for_date: $dateInput.val() || new Date().toISOString().slice(0, 10), remarks: value };
             const $cell = jq(cell);
             const $done = $row.find(`[data-key="done"]`);
             const $chk = $done.find('.done-checkbox'); //log($chk);
             const checked = $chk.is(':checked'); log(checked);
-             const taskId = $chk.data('task-id');
+            const taskId = $chk.data('task-id');
+            const payload = { for_date: $dateInput.val() || new Date().toISOString().slice(0, 10), remarks: value };
 
             const url = COMPLETE_URL(taskId)
 
@@ -677,7 +677,7 @@ function initDoneColumn(tableArg, role) {
 
         // create checkbox (if not already)
         if (!$doneCell.find('.done-checkbox').length) {
-            const $chk = jq(`<input type="checkbox" class="done-checkbox" data-task-id="${taskId}" style="margin-right:6px;">`);
+            const $chk = jq(`<input type="checkbox" class="done-checkbox form-check-input" data-task-id="${taskId}" style="margin-right:6px;">`);
             $chk.prop('checked', !!isCompleted);
 
             // if role is not user, make it disabled/read-only

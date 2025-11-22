@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS `posts` (
 
 -- SELECT COUNT(*) as cnt FROM posts WHERE 
 
--- DROP TABLE tasks_list, user_task_assignments;
+-- DROP TABLE tasks_list; --, user_task_assignments;
 -- ======================
 -- New: tasks_list (task templates / master list for recurring daily/weekly/once tasks)
 -- ======================
@@ -181,6 +181,7 @@ CREATE TABLE IF NOT EXISTS `tasks_list` (
 --     ADD COLUMN `deleted_by` BIGINT UNSIGNED NULL AFTER `updated_by`;
 -- ======================
 -- New: user_task_assignments (mapping task templates -> users)
+-- DROP TABLE user_task_assignments;
 -- ======================
 CREATE TABLE IF NOT EXISTS `user_task_assignments` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -220,6 +221,21 @@ CREATE TABLE IF NOT EXISTS `users_daily_task_completions` (
   INDEX `idx_udtc_for_date` (`for_date`),
   INDEX `idx_udtc_user` (`user_id`)
 );
+
+CREATE TABLE IF NOT EXISTS `users_daily_task_remarks` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `task_list_id` BIGINT UNSIGNED NOT NULL,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `remark` TEXT NOT NULL,
+  `for_date` DATE NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_udtr_tasklist FOREIGN KEY (`task_list_id`) REFERENCES `tasks_list`(`id`) ON DELETE CASCADE,
+  CONSTRAINT fk_udtr_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+
+  UNIQUE KEY ux_remarks_unique (`task_list_id`, `user_id`, `for_date`)
+);
+
 
 -- ======================
 -- Helpful: Example view for tasks assigned to a user (optional)

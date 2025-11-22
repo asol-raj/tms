@@ -1,14 +1,14 @@
 <div class="container-fluid">
     <div class="row mt-2 py-2 align-items-center">
-        <div class="col-12 col-sm-3 mb-3 mb-sm-0">
+        <div class="col-12 col-sm-3 mb-3 mb-sm-0 d-flex align-items-center gap-2">
             <span class="fw-bold mb-0 fs-1 text-primary nav-link" title="Task Mamagement System">TMS</span>
             <span class="text-secondary">
                 <?= user.fullname ?>
             </span>
         </div>
 
-        <div class="col-12 col-sm-9">
-            <div class="d-flex justify-content-end align-items-center gap-5">
+        <div class="col-12 col-xl-9">
+            <div class="d-flex justify-content-end align-items-center gap-3 gap-xl-5">
                 <!-- <div class="position-relative py-2 px-4 text-bg-secondary border border-secondary rounded-pill">
                     Marker <svg width="1em" height="1em" viewBox="0 0 16 16"
                         class="position-absolute top-100 start-50 translate-middle mt-1" fill="var(--bs-secondary)"
@@ -17,19 +17,19 @@
                             d="M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
                     </svg>
                 </div> -->
-                <input type="search" name="search" id="searchTask" placeholder="Search tasks..." class="form-control"
+                <input type="search" name="search" id="searchTask" placeholder="Search tasks..." class="form-control me-auto ms-xl-0"
                     style="width: clamp(250px, 20vw, 450px);">
-                <div class="vr"></div>
-                <button class="btn btn-bd-outline-sunset px-md-5 border-2 position-relative" id="viewPosts"><i
+                <!-- <div class="vr"></div> -->
+                <button class="btn btn-bd-outline-sunset px-lg-5 border-2 position-relative" id="viewPosts"><i
                         class="bi bi-cup-hot-fill"></i> FEEDS
                     <span
                         class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success text-white"
                         id="newPosts"><span class="visually-hidden">unread messages</span></span>
                 </button>
-                <a href="/auth/daily/tasks" class="btn btn-bd-outline-primary px-md-4 border-2 me-auto me-sm-0"
+                <a href="/auth/daily/tasks" class="btn btn-bd-outline-primary px-xl-4 border-2 me-auto me-sm-0"
                     title="View Daily Tasks List"><i class="bi bi-view-list"></i> DAILY TASKS</a>
                 <? if(user.role !== 'user'){ ?>
-                <button class="btn btn-bd-primary px-md-5 create-task border-2" title="Create A New Task"><i
+                <button class="btn btn-bd-primary px-xl-5 create-task border-2" title="Create A New Task"><i
                         class="bi bi-plus-lg"></i> TASK</button>
                 <? } ?>
 

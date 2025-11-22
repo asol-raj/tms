@@ -132,16 +132,14 @@ const TaskListModel = {
         u.fullname AS created_by,
         ub.fullname AS updated_by,
         l.is_active,
-        DATE_FORMAT(l.created_at, '%m/%d/%Y, %r') AS created_at,
-        DATE_FORMAT(l.updated_at, '%m/%d/%Y, %r') AS updated_at,
-
         -- JSON array of assigned user names
         IF(
           COUNT(au.id) = 0,
           JSON_ARRAY(),   -- no assigned users → empty array
           JSON_ARRAYAGG(au.fullname)
-        ) AS assigned_to
-
+        ) AS assigned_to,
+        DATE_FORMAT(l.created_at, '%m/%d/%Y, %r') AS created_at,
+        DATE_FORMAT(l.updated_at, '%m/%d/%Y, %r') AS updated_at
       FROM tasks_list l
       LEFT JOIN users u  ON u.id = l.created_by
       LEFT JOIN users ub ON ub.id = l.updated_by
@@ -172,7 +170,7 @@ const TaskListModel = {
       }
 
       // combine SQL
-      const finalSql = sql + (whereParts.length ? (" AND " + whereParts.join(" AND ")) : "") + " GROUP BY l.id ORDER BY l.id DESC";
+      const finalSql = sql + (whereParts.length ? (" AND " + whereParts.join(" AND ")) : "") + " GROUP BY l.id ORDER BY l.title ASC";
 
       const [rows] = await pool.query(finalSql, params);
 

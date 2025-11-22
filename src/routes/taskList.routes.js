@@ -2,6 +2,7 @@
 
 import express from "express";
 import TaskListController from "../controllers/taskList.controller.js";
+import isAdmin from "../middleware/isAdmin.js";
 
 // all routes by default have /auth/tasklist
 const router = express.Router();
@@ -27,6 +28,6 @@ router.get("/api/:id", TaskListController.getById);
 router.put("/update/:id", TaskListController.update);
 
 // DELETE
-router.delete("/delete/:id", TaskListController.remove);
+router.delete("/delete/:id", isAdmin, TaskListController.remove);
 
 export default router;
