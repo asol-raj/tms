@@ -1,5 +1,5 @@
 // controllers/dailyTasks.controller.js
-import { log } from '../config/db.js';
+import { log, runMysql } from '../config/db.js';
 import * as model from '../models/dailyTasks.model.js';
 
 // Helper: get weekday short string from date (JS Date or YYYY-MM-DD)
@@ -131,16 +131,17 @@ export const listDailyTasksForAllUsers = async (req, res) => {
   completions
 */
 // POST /tasks/:id/complete  body: { for_date, remarks, user_id (optional) }
-export const completeTask = async (req, res) => { log('134')
+export const completeTask = async (req, res) => {
+  log('134')
   try {
     const task_list_id = req.params.id;
     const user_id = req.user?.id;
     if (!user_id) return res.status(400).json({ error: 'user_id required' });
 
-    const for_date = req.body.for_date || (new Date()).toISOString().slice(0, 10); 
+    const for_date = req.body.for_date || (new Date()).toISOString().slice(0, 10);
     const remarks = req.body.remarks || null;
 
-    const completion = await model.markComplete({ task_list_id, user_id, for_date, remarks }); 
+    const completion = await model.markComplete({ task_list_id, user_id, for_date, remarks });
     return res.json({ completion });
   } catch (err) {
     console.error('completeTask err', err);
@@ -270,3 +271,121 @@ export const getAllTasks = async (req, res) => {
     res.status(500).json({ error: 'An error occurred while fetching tasks.' });
   }
 };
+
+export const viewMonthReport_ = async (req, res) => {
+  try {
+    const { startOfMonth } = req.body;
+    const userId = req.body.userId || req.user.id;
+    const sql = "WITH RECURSIVE dates AS ( SELECT DATE(?) AS dt UNION ALL SELECT DATE_ADD(dt, INTERVAL 1 DAY) FROM dates WHERE dt < LAST_DAY(?) ) SELECT tl.id AS task_id, tl.task_list_id, tl.title, d.dt AS for_date, CASE WHEN NOT ( tl.recurrence_type = 'daily' OR (tl.recurrence_type = 'weekly' AND FIND_IN_SET(LOWER(DATE_FORMAT(d.dt, '%a')), tl.recurrence_weekdays)) OR (tl.recurrence_type = 'once' AND tl.once_date = d.dt) ) THEN 'N/A' WHEN c.id IS NULL THEN 'No' WHEN TIMESTAMPDIFF( HOUR, CONCAT(d.dt, ' 00:00:00'), c.completed_at ) > 24 THEN CONCAT( 'Yes (', TIMESTAMPDIFF( HOUR, CONCAT(d.dt, ' 00:00:00'), c.completed_at ), ' hrs)' ) ELSE 'No' END AS status, CASE WHEN c.id IS NULL THEN NULL ELSE TIMESTAMPDIFF(HOUR, CONCAT(d.dt, ' 00:00:00'), c.completed_at) END AS hours_late, c.completed_at, c.remarks FROM ( SELECT DISTINCT tl.* FROM tasks_list tl INNER JOIN user_task_assignments uta ON uta.task_list_id = tl.id AND uta.user_id = ? AND uta.is_active = 1 WHERE tl.is_active = 1 ) tl CROSS JOIN dates d LEFT JOIN users_daily_task_completions c ON c.task_list_id = tl.id AND c.user_id = ? AND c.for_date = d.dt AND c.is_active = 1 ORDER BY tl.id, d.dt;";
+    const rows = await runMysql(sql, [startOfMonth, startOfMonth, userId, userId]);
+    res.json({ data: rows });
+  } catch (error) {
+    console.error('Error fetching tasks:', error);
+    res.status(500).json({ error: 'An error occurred while fetching tasks.' });
+  }
+}
+
+export const viewMonthReport = async (req, res) => {
+  try {
+    const { startOfMonth } = req.body;
+    let  userId = req.body.userId; // req.body.userId ? Number(req.body.userId) : (req.user && req.user.id ? Number(req.user.id) : null);    
+    if(req.user.role === 'user') {
+      userId = req.user.id
+    };
+
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    // drop-in SQL replacement for viewMonthReport (params: startOfMonth, startOfMonth, userId, userId)
+    const sql = `
+      WITH RECURSIVE dates AS (
+        SELECT DATE(?) AS dt
+        UNION ALL
+        SELECT DATE_ADD(dt, INTERVAL 1 DAY) FROM dates
+        WHERE dt < LAST_DAY(?)
+      )
+      SELECT
+        tl.id AS task_id,
+        tl.task_list_id,
+        tl.title,
+        DATE_FORMAT(d.dt, '%Y-%m-%d') AS for_date,
+        CASE
+          -- 1) not a scheduled occurrence on this date
+          WHEN NOT (
+            tl.recurrence_type = 'daily'
+            OR (tl.recurrence_type = 'weekly' AND FIND_IN_SET(LOWER(DATE_FORMAT(d.dt, '%a')), tl.recurrence_weekdays))
+            OR (tl.recurrence_type = 'once' AND tl.once_date = d.dt)
+          ) THEN 'N/A'
+
+          -- 2) future date (beyond today) => treat as N/A (user hasn't had a chance yet)
+          WHEN d.dt > CURRENT_DATE() THEN 'N/A'
+
+          -- 3) assignment not present/active for this user on this task OR assignment starts after this date => N/A
+          WHEN (uta.id IS NULL)
+              OR (uta.is_active = 0)
+              OR (uta.start_date IS NOT NULL AND uta.start_date > d.dt)
+              OR (uta.end_date IS NOT NULL AND uta.end_date < d.dt)
+              OR (uta.assigned_at IS NOT NULL AND DATE(uta.assigned_at) > d.dt)
+          THEN 'N/A'
+
+          -- 4) scheduled & assignment active on this date, but no completion recorded
+          WHEN c.id IS NULL THEN 'No'
+
+          -- 5) completed but beyond 24 hours -> late
+          WHEN TIMESTAMPDIFF(
+                HOUR,
+                CONCAT(d.dt, ' 00:00:00'),
+                c.completed_at
+              ) > 24
+          THEN CONCAT(
+                'Yes (',
+                TIMESTAMPDIFF(
+                  HOUR,
+                  CONCAT(d.dt, ' 00:00:00'),
+                  c.completed_at
+                ),
+                ' hrs)'
+              )
+          ELSE 'No'
+        END AS status,
+
+        CASE WHEN c.id IS NULL THEN NULL
+            ELSE TIMESTAMPDIFF(HOUR, CONCAT(d.dt, ' 00:00:00'), c.completed_at)
+        END AS hours_late,
+
+        CASE WHEN c.completed_at IS NULL THEN NULL ELSE DATE_FORMAT(c.completed_at, '%Y-%m-%d %T') END AS completed_at,
+        c.remarks
+
+      FROM tasks_list tl
+      -- only tasks that have an active assignment for this user (inner join)
+      INNER JOIN user_task_assignments uta
+        ON uta.task_list_id = tl.id
+        AND uta.user_id = ?
+        AND uta.is_active = 1
+
+      CROSS JOIN dates d
+
+      LEFT JOIN users_daily_task_completions c
+        ON c.task_list_id = tl.id
+        AND c.user_id = ?
+        AND c.for_date = d.dt
+        AND c.is_active = 1
+
+      WHERE tl.is_active = 1
+      ORDER BY tl.id, d.dt;
+      `;
+
+    // params: startOfMonth, startOfMonth, userId, userId
+    const params = [startOfMonth, startOfMonth, userId, userId];
+    const rows = await runMysql(sql, params);
+
+    // normalize depending on runMysql output
+    const normalizedRows = (Array.isArray(rows) && rows.length && rows[0] && rows[0].task_id === undefined)
+      ? (rows[0] || [])
+      : rows || [];
+
+    return res.json({ data: normalizedRows });
+  } catch (error) {
+    console.error('Error fetching month report:', error);
+    return res.status(500).json({ error: 'An error occurred while fetching month report.' });
+  }
+};
+

@@ -1,4 +1,4 @@
--- Active: 1758133010005@@127.0.0.1@3306@taskmgmt
+-- Active: 1758704013034@@127.0.0.1@3306@taskmgmt
 -- schema.sql
 -- DB: taskmgmt
 -- Created for development: full schema (users, profiles, tasks, templates, assignments, completions, week offs, posts, remarks)
@@ -259,3 +259,64 @@ JOIN users u ON u.id = uta.user_id;
 -- 4) Permission: The created DB user 'user_tms' has full privileges for development convenience. Tighten privileges in production.
 
 -- EOF
+
+-- DROP TABLE special_tasks;
+-- DROP TABLE special_task_attachments;
+
+CREATE TABLE IF NOT EXISTS `special_tasks` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `task_name` VARCHAR(150) NOT NULL,
+  `description` TEXT DEFAULT NULL,
+  `status` ENUM('open','pending','completed','closed','archived') NOT NULL DEFAULT 'open',
+  `priority` ENUM('low','medium','high','critical') NOT NULL DEFAULT 'medium',
+  `category` VARCHAR(100) DEFAULT NULL,
+  `created_by` BIGINT UNSIGNED NOT NULL,
+  `assigned_to` BIGINT UNSIGNED DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  CONSTRAINT FOREIGN KEY (`assigned_to`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+  INDEX (`created_by`),
+  INDEX (`assigned_to`)
+);
+
+CREATE TABLE IF NOT EXISTS `special_task_correspondence` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `task_id` BIGINT UNSIGNED NOT NULL,
+  `sender_id` BIGINT UNSIGNED NOT NULL,
+  `message` TEXT DEFAULT NULL,
+  `is_internal` TINYINT(1) NOT NULL DEFAULT 0, -- 0 = visible to normal users, 1 = internal/admin-only
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT FOREIGN KEY (`sender_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  INDEX (`task_id`),
+  INDEX (`sender_id`),
+  CONSTRAINT `fk_stc_task` FOREIGN KEY (`task_id`) REFERENCES `special_tasks`(`id`) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS `special_task_attachments` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `task_id` BIGINT UNSIGNED DEFAULT NULL,               -- file attached to task itself
+  `correspondence_id` BIGINT UNSIGNED DEFAULT NULL,     -- OR file attached to a correspondence message
+  `uploaded_by` BIGINT UNSIGNED NOT NULL,
+  `file_name` VARCHAR(255) NOT NULL,                    -- original filename
+  `file_path` VARCHAR(1000) NULL,                       -- server path or cloud URL
+  `mime_type` VARCHAR(100) DEFAULT NULL,
+  `file_size` BIGINT UNSIGNED DEFAULT NULL,             -- bytes
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX (`task_id`),
+  INDEX (`correspondence_id`),
+  INDEX (`uploaded_by`),
+  CONSTRAINT `fk_sta_uploaded_by` FOREIGN KEY (`uploaded_by`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_sta_task` FOREIGN KEY (`task_id`) REFERENCES `special_tasks`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_sta_corr` FOREIGN KEY (`correspondence_id`) REFERENCES `special_task_correspondence`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_task_or_corr` CHECK (
+    (`task_id` IS NOT NULL AND `correspondence_id` IS NULL) OR
+    (`task_id` IS NULL AND `correspondence_id` IS NOT NULL)
+  )
+);
+
+ALTER TABLE `special_task_attachments`
+  ADD CONSTRAINT `chk_task_or_corr` CHECK (
+    (task_id IS NOT NULL AND correspondence_id IS NULL) OR
+    (task_id IS NULL AND correspondence_id IS NOT NULL)
+  );

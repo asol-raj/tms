@@ -1,12 +1,18 @@
 <div class="container-fluid">
     <div class="row mt-2 py-2 align-items-center">
-        <div class="col-12 col-md-3 mb-3 mb-md-0">
+        <div class="col-12 col-xl-3 mb-3 mb-xl-0">
             <a href="/auth/daily/tasks" class="fw-bold mb-0 fs-1 text-primary nav-link">DAILY TASKS</a>
             <span class="text-secondary"> <?= user.fullname ?> </span>
         </div>
 
-        <div class="col-12 col-md-9">
-            <div class="d-flex justify-content-between justify-content-md-end align-items-center gap-2">
+        <div class="col-12 col-xl-9">
+            <div class="d-flex justify-content-between justify-content-xl-end align-items-center gap-2">
+                <button class="btn btn-primary viewReport">View Report</button>
+                <div class="btn-group">
+                    <butotn class="btn btn-light last" title="Previous Date"><i class="bi bi-caret-left-fill"></i></butotn>
+                    <button class="btn btn-light next disabled" title="Next Date"><i class="bi bi-caret-right-fill"></i></button>
+                </div>
+                
                 <input type="date" name="" id="inputDate" class="form-control me-auto me-md-0" style="width: 180px;">
 
                 <? if(user.role !== 'user'){ ?>

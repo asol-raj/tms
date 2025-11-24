@@ -19,6 +19,7 @@ router.post('/:id/undo_complete', ctrl.undoComplete);
 router.get('/today', ctrl.getTodayTasks); // ?date=YYYY-MM-DD optional
 router.get('/user/all', ctrl.listDailyTasksForAllUsers);
 router.get('/user/:user_id', ctrl.listTasksForUser);
+router.post('/month/report', ctrl.viewMonthReport);
 
 
 // completions
@@ -28,5 +29,7 @@ router.get('/date/:date/all', ctrl.listTasksByDateForAllUsers); // admin - all u
 
 // keep existing today route (it will now use the unified model underneath)
 router.get('/today', ctrl.getTodayTasks);
+
+
 
 export default router;

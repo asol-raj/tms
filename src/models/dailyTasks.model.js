@@ -1,5 +1,5 @@
 // src/models/dailyTasks.model.js
-import { pool } from '../config/db.js';
+import { log, pool } from '../config/db.js';
 
 /**
  * getTasks(options)
@@ -56,11 +56,11 @@ export const getTasks = async (options = {}) => {
 
   // Aggregate assigned users for admin view
   const assignAgg = isAdmin
-    // ? `, JSON_ARRAYAGG(JSON_OBJECT('id', u2.id, 'fullname', u2.fullname)) AS assigned_users`
     ? `, JSON_ARRAYAGG(u2.fullname) AS assigned_users`
     : '';
 
   // Target-specific columns (assignment & completion) or NULLs if no target
+  // NOTE: is_delayed now checks if a completion exists AND the DATE(completed_at) is after the for_date
   const targetCols = targetUserId ? `
     uta_for_user.id AS assignment_id,
     DATE_FORMAT(uta_for_user.assigned_at, '%m-%d-%Y') AS assigned_on,
@@ -69,10 +69,32 @@ export const getTasks = async (options = {}) => {
     uta_for_user.is_active AS assignment_active,
     CASE WHEN c.id IS NOT NULL THEN 1 ELSE 0 END AS is_completed,
     c.id AS completion_id,
-    DATE_FORMAT(c.completed_at, '%m-%d-%Y %T') AS logged_at,
-    DATE_FORMAT(c.for_date, '%m-%d-%Y') AS completed_on,
-    CASE WHEN c.id IS NOT NULL AND tl.recurrence_type = 'once' AND c.for_date > tl.once_date THEN 'Yes' ELSE 'No' END AS is_delayed,
-    c.remarks AS remarks
+    DATE_FORMAT(c.for_date, '%m-%d-%Y') AS for_date,
+    DATE_FORMAT(c.completed_at, '%m-%d-%Y %T') AS completed_at,
+    -- CASE WHEN c.id IS NOT NULL AND DATE(c.completed_at) > c.for_date THEN 'Yes' ELSE 'No' END AS is_delayed,
+    -- CASE
+    --   WHEN c.id IS NOT NULL AND TIMESTAMPDIFF(HOUR, CONCAT(c.for_date, ' 00:00:00'), c.completed_at) > 24
+    --   THEN CONCAT('Yes (', TIMESTAMPDIFF(HOUR, CONCAT(c.for_date, ' 00:00:00'), c.completed_at), ' hrs)')
+    --   ELSE 'No'
+    -- END AS is_delayed
+    CASE
+    WHEN c.id IS NULL THEN 'N/A'
+    WHEN TIMESTAMPDIFF(
+          HOUR,
+          CONCAT(c.for_date, ' 00:00:00'),
+          c.completed_at
+        ) > 24
+      THEN CONCAT(
+            'Yes (',
+            TIMESTAMPDIFF(
+              HOUR,
+              CONCAT(c.for_date, ' 00:00:00'),
+              c.completed_at
+            ),
+            ' hrs)'
+          )
+    ELSE 'No'
+  END AS is_delayed
   ` : `
     NULL AS assignment_id,
     NULL AS assigned_on,
@@ -81,8 +103,8 @@ export const getTasks = async (options = {}) => {
     NULL AS assignment_active,
     NULL AS is_completed,
     NULL AS completion_id,
-    NULL AS logged_at,
-    NULL AS completed_on,
+    NULL AS for_date,
+    NULL AS completed_at,
     NULL AS is_delayed,
     NULL AS remarks
   `;
@@ -167,10 +189,11 @@ export const getTasks = async (options = {}) => {
     GROUP BY tl.id
     ORDER BY FIELD(tl.priority, 'high', 'medium', 'low') DESC, tl.id;
   `;
-
+  // log(sql);
   // Execute
   const [rows] = await pool.query(sql, params);
   return rows;
+  // Normalize rows (previous code returned early which skipped this mapping; fixed)
   const resultRows = Array.isArray(rows) ? rows : rows?.rows ?? [];
 
   // Normalizers
@@ -239,6 +262,7 @@ export const getTasks = async (options = {}) => {
     };
   });
 };
+
 
 export const markComplete = async ({ task_list_id, user_id, for_date, remarks }) => {
   const sql = `

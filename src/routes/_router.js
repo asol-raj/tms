@@ -10,12 +10,13 @@ import taskListRoutes from './taskList.routes.js';
 import userTaskAssignmentRoutes from "./userTaskAssignment.routes.js";
 import assignmentRoutes from "./assignment.routes.js";
 import dailyTaskRoutes from "./dailytasks.routes.js";
+import specialTasksRoutes from "./specialTasksRoutes.js";
 
 const router = express.Router();
 
 router.get('/', (req, res) => res.render('index', { title: 'TMS' }));
-router.get('/login', redirectIfAuthenticated, (req, res) => res.render('login', { title: 'Login' }));
-router.get('/admin/register', (req, res) => res.render('register', { title: 'Register' }));
+router.get('/login', redirectIfAuthenticated, (req, res) => res.render('login', { title: 'TMS Login' }));
+router.get('/admin/register', (req, res) => res.render('register', { title: 'TMS Signup' }));
 
 
 // These routes MUST be public.
@@ -39,6 +40,7 @@ router.use('/auth/tasklist', taskListRoutes);
 router.use("/auth/tasklist/assignments", userTaskAssignmentRoutes);
 router.use("/auth/assignments", assignmentRoutes);
 router.use("/auth/daily/tasks", dailyTaskRoutes);
+router.use("/auth/speical/task", specialTasksRoutes);
 
 router.get('/403', (req, res) => res.render('403', { title: 'Access Restricted' }))
 router.get('/auth/dashboard', (req, res) => res.render('dashboard', { title: 'Dashboard', user: req.user }));

@@ -36,9 +36,60 @@ function normalizeToIsoDate(s) {
     return null; // unknown format
 }
 
-const $dateInput = jq('#inputDate');
+const $inputDate = jq('#inputDate');
 const $userSelect = jq('#selectUser');
+const $prevButton = $('.last'); // Assuming 'last' is the previous button
+const $nextButton = $('.next');
 
+function formatDate(date) {
+    const year = date.getFullYear();
+    // Month is 0-indexed, so add 1 and pad with '0'
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    // Day pad with '0'
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Function to check if a date string is today's date
+function isToday(dateString) {
+    const today = new Date();
+    const dateToCheck = new Date(dateString);
+
+    // Reset time component for accurate day comparison
+    today.setHours(0, 0, 0, 0);
+    dateToCheck.setHours(0, 0, 0, 0);
+
+    return today.getTime() === dateToCheck.getTime();
+}
+
+// Function to update the Next button's disabled state
+function updateButtonState(dateString) {
+    if (isToday(dateString)) {
+        $nextButton.prop('disabled', true).addClass('disabled');
+    } else {
+        $nextButton.prop('disabled', false).removeClass('disabled');
+    }
+}
+
+// Function to change the date and update the button state
+function updateDate(days) {
+    let currentDateString = $inputDate.val();
+
+    // Handle initial empty input case by defaulting to today
+    if (!currentDateString) {
+        currentDateString = formatDate(new Date());
+    }
+
+    const newDate = new Date(currentDateString);
+    // Add the specified number of days to the current date
+    newDate.setDate(newDate.getDate() + days);
+
+    const newDateString = formatDate(newDate);
+    $inputDate.val(newDateString);
+
+    // Update the button state based on the new date
+    updateButtonState(newDateString);
+}
 
 async function loadUsers() {
     try {
@@ -73,7 +124,7 @@ function buildApiUrl(date, user) {
 
 function handleUpdate() {
     // 1. Get current values
-    const currentDate = $dateInput.val() || null;
+    const currentDate = $inputDate.val() || null;
     const selectedUser = $userSelect.val();
 
     // 2. Call the helper function to get the URL
@@ -89,10 +140,250 @@ document.addEventListener('DOMContentLoaded', () => {
     loadUsers();
     // log(new Date().toISOString().slice(0, 10));
 
-    $dateInput.on('change', handleUpdate);
+    $inputDate.on('change', handleUpdate);
     $userSelect.on('change', handleUpdate);
 
+    // 1. Set initial date if input is empty and update button state
+    if (!$inputDate.val()) {
+        const todayString = formatDate(new Date());
+        $inputDate.val(todayString);
+    }
+    // Ensure the initial state of the next button is correct
+    updateButtonState($inputDate.val());
+
+    // --- Click Handlers ---
+
+    // Previous Date Button Click Handler (Go back one day)
+    $prevButton.on('click', function () {
+        // Go back 1 day
+        updateDate(-1);
+        handleUpdate();
+    });
+
+    // Next Date Button Click Handler (Go forward one day)
+    $nextButton.on('click', function () {
+        // Only proceed if the button is not disabled (prevents unnecessary updates)
+        if (!$nextButton.is(':disabled')) {
+            // Go forward 1 day
+            updateDate(1);
+            handleUpdate();
+        }
+    });
+
+    jq('button.viewReport1').on('click', async () => {
+        const $inputDate = jq('#inputDate');
+        const $userSelect = jq('#selectUser');
+        const $modal = showModal('Month Report', 'fullscreen');
+        let res = await advanceMysqlQuery({ key: 'user_report', values: ['', '', '', ''] });
+        const data = res?.data || [];
+        if (!data.length) { $body.html('No Records Fond'); return }
+        const $body = $modal.find('div.modal-body');
+        const tbl = createTable({ data: res?.data });
+        $body.html(tbl.table);
+        $modal.data('bs.modal').show();
+    })
+
     handleUpdate();
+
+
+    jq('button.viewReport').on('click', async () => {
+        try {
+            const $inputDate = jq('#inputDate');   // expects value like "2025-11" (YYYY-MM) or input[type=month]
+            const $userSelect = jq('#selectUser'); // <select> with userId values
+            const userId = Number($userSelect.val()) || null;
+
+            // compute startOfMonth in YYYY-MM-01 format
+            let monthVal = ($inputDate.val() || '').trim();
+            if (!monthVal) {
+                const now = new Date();
+                monthVal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            }
+            const mMatch = monthVal.match(/^(\d{4})-(\d{2})/);
+            if (!mMatch) return alert('Invalid month format. Use YYYY-MM or pick a month.');
+            const startOfMonth = `${mMatch[1]}-${mMatch[2]}-01`;
+
+            // show modal & loading
+            
+            // Request backend (controller expects { startOfMonth, userId })
+            const res = await postData('/auth/daily/tasks/month/report', { startOfMonth, userId });
+            const rows = res?.data || [];
+            if (!rows.length) {
+                // $body.html('<div class="text-center py-4">No records found for selected month/user.</div>');
+                // return;
+                alert('No Records Found!');
+                return;
+            }
+            
+            const $modal = showModal(`Month Report — ${mMatch[1]}-${mMatch[2]}`, 'fullscreen');
+            const $body = $modal.find('div.modal-body');
+            $body.html('<div class="text-center py-4">Loading report…</div>');
+            $modal.data('bs.modal').show();
+            // Build full month days array using startOfMonth -> last day (guarantees all days present)
+            const start = new Date(startOfMonth + 'T00:00:00'); // safe because startOfMonth is YYYY-MM-DD
+            const last = new Date(start.getFullYear(), start.getMonth() + 1, 0); // last day of month
+            const forDates = [];
+            for (let d = new Date(start); d <= last; d.setDate(d.getDate() + 1)) {
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                forDates.push(`${yyyy}-${mm}-${dd}`);
+            }
+
+            // normalize helper (rows now have for_date as 'YYYY-MM-DD' or 'YYYY-MM-DD HH:MM:SS')
+            function normalizeIsoDate(v) {
+                if (!v) return null;
+                if (v instanceof Date) return v.toISOString().slice(0, 10);
+                return String(v).slice(0, 10);
+            }
+
+            // Build tasks map: task_id => { title, task_list_id, cells: { for_date: cellObj } }
+            const tasksMap = new Map();
+            for (const r of rows) {
+                const isoDate = normalizeIsoDate(r.for_date);
+                if (!tasksMap.has(r.task_id)) {
+                    tasksMap.set(r.task_id, {
+                        task_id: r.task_id,
+                        task_list_id: r.task_list_id,
+                        title: r.title,
+                        cells: {}
+                    });
+                }
+                // completed_at returned as string by server; keep it as-is (no new Date)
+                tasksMap.get(r.task_id).cells[isoDate] = {
+                    status: r.status,
+                    hours_late: r.hours_late != null ? Number(r.hours_late) : null,
+                    completed_at: r.completed_at || null,
+                    remarks: r.remarks ?? null
+                };
+            }
+
+            // Build matrixRows (array) — fill missing days with N/A
+            const matrixRows = Array.from(tasksMap.values()).map(t => {
+                const cells = forDates.map(dt => {
+                    const c = t.cells[dt];
+                    if (!c) return { status: 'N/A', hours_late: null, completed_at: null, remarks: null };
+                    return c;
+                });
+                return {
+                    task_id: t.task_id,
+                    task_list_id: t.task_list_id,
+                    title: t.title,
+                    cells
+                };
+            });
+
+            // Build HTML table
+            const tableId = `report_table_${Date.now()}`;
+            const $table = jq(`<div class="table-responsive"></div>`);
+            const $tbl = jq(`
+                <table id="${tableId}" class="table table-bordered table-sm align-middle text-center">
+                    <thead class="table-light">
+                    <tr>
+                        <th style="min-width:240px">Task</th>
+                        ${forDates.map(dt => `<th data-date="${dt}">${dt.slice(8, 10)}</th>`).join('')}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    ${matrixRows.map(row => `
+                        <tr>
+                        <td class="text-start">${escapeHtml(String(row.title || '—'))}</td>
+                        ${row.cells.map(cell => {
+                            const v = escapeHtml(String(cell.status || 'N/A'));
+                            return `<td data-key="is_delayed" data-value="${v}">${formatCellHtml(v)}</td>`;
+                        }).join('')}
+                        </tr>
+                    `).join('')}
+                    </tbody>
+                </table>
+                `);
+
+            function escapeHtml(s) {
+                return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            }
+
+            function formatCellHtml(v) {
+                const lower = (v || '').toLowerCase();
+                if (lower === 'n/a') return `<span class="text-secondary">--</span>`;
+                if (lower === 'no') return `<span class="text-success">${v}</span>`;
+                if (lower.startsWith('yes')) return `<span class="text-danger">${v}</span>`;
+                return `<span>${v}</span>`;
+            }
+
+            // append controls: export CSV button + legend
+            const $controls = jq(`
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" id="exportCsvBtn">Export CSV</button>
+                        <button class="btn btn-sm btn-outline-secondary ms-2" id="copyCsvBtn">Copy CSV</button>
+                    </div>
+                    <div class="small text-muted">
+                        <span class="me-3"><span class="badge bg-danger">&nbsp;</span> Late</span>
+                        <span class="me-3"><span class="text-muted fst-italic">--</span> Not scheduled</span>
+                    </div>
+                </div>
+                `);
+
+            $table.append($controls).append($tbl);
+            $body.html($table);
+
+            // export / copy handlers
+            jq('#exportCsvBtn').on('click', () => {
+                const csv = matrixToCsv(matrixRows, forDates);
+                downloadTextFile(csv, `report_${userId}_${mMatch[1]}-${mMatch[2]}.csv`);
+            });
+            jq('#copyCsvBtn').on('click', async () => {
+                const csv = matrixToCsv(matrixRows, forDates);
+                try {
+                    await navigator.clipboard.writeText(csv);
+                    alert('CSV copied to clipboard');
+                } catch (e) {
+                    alert('Copy failed — your browser may block clipboard. Try Export.');
+                }
+            });
+
+            // attach report data to modal for possible reuse
+            $modal.data('report', { month: `${mMatch[1]}-${mMatch[2]}`, days: forDates, matrixRows });
+
+            // run highlighting snippet
+            // $body.find('[data-key="is_delayed"]').each((i, e) => {
+            //     const val = (e.dataset.value || '').toLowerCase();
+            //     if (val.includes('yes')) e.classList.add('text-bg-danger');
+            // });
+
+            // $body.find('[data-key="is_delayed"]').each((i, e) => {
+            //     const val = (e.dataset.value || '').toLowerCase();
+            //     if (val.includes('no')) e.classList.add('text-bg-success');
+            // });
+
+            // CSV helpers
+            function matrixToCsv(matrixRows, days) {
+                const header = ['Task', ...days];
+                const lines = [header.join(',')];
+                for (const r of matrixRows) {
+                    const cells = r.cells.map(c => `"${String(c.status || '').replace(/"/g, '""')}"`);
+                    lines.push(`"${String(r.title || '').replace(/"/g, '""')}",${cells.join(',')}`);
+                }
+                return lines.join('\r\n');
+            }
+            function downloadTextFile(text, filename) {
+                const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.setAttribute('download', filename);
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            }
+
+        } catch (err) {
+            console.error('report error', err);
+            alert('Failed to load report: ' + (err?.response?.data?.error || err));
+        }
+    });
+
+
 });
 
 /**
@@ -144,7 +435,7 @@ async function loadData(url = '/auth/daily/tasks/data') {
         const res = await fetchData(url);
 
         // Normalize tasks array
-        const tasks = res?.tasks ?? [];
+        const tasks = res?.tasks ?? []; log(tasks);
 
         // ---------------------------
         // 2) Handle empty result set
@@ -327,11 +618,23 @@ async function loadData(url = '/auth/daily/tasks/data') {
 
         // Additional role-based hides
         if (role === 'user') {
-            hideTableColumns($table, [, 'id', 'is_completed', 'is_active', 'logged_at']);
+            hideTableColumns($table, [, 'id', 'is_completed', 'is_active', 'logged_at', 'for_date']);
         } else if (role === 'admin') {
             // Admins should not see the "done" column (optional). Keep it disabled/hidden for admins.
             hideTableColumns($table, ['done']);
         }
+
+        // $tbody.find(`[data-key="is_delayed"]`).each((i, e) => {
+        //     let val = e.dataset.value;
+        //     if (val == 'Yes') e.classList.add('text-bg-danger');
+        // })
+
+        $tbody.find('[data-key="is_delayed"]').each((i, e) => {
+            const val = (e.dataset.value || "").toLowerCase();
+            if (val.includes("yes")) {
+                e.classList.add('text-bg-danger');
+            }
+        });
 
         // ---------------------------
         // 14) Visual polish
@@ -350,7 +653,7 @@ async function loadData(url = '/auth/daily/tasks/data') {
             const $chk = $done.find('.done-checkbox'); //log($chk);
             const checked = $chk.is(':checked'); log(checked);
             const taskId = $chk.data('task-id');
-            const payload = { for_date: $dateInput.val() || new Date().toISOString().slice(0, 10), remarks: value };
+            const payload = { for_date: $inputDate.val() || new Date().toISOString().slice(0, 10), remarks: value };
 
             const url = COMPLETE_URL(taskId)
 
@@ -639,7 +942,7 @@ async function addEditDescription(rowid) {
 function initDoneColumn(tableArg, role) {
     const $table = (tableArg instanceof jQuery) ? tableArg : jq(tableArg);
     if (!$table || !$table.length) return;
-    const date = $dateInput.val(); //log(date);
+    const date = $inputDate.val(); //log(date);
 
     // endpoints
     const COMPLETE_URL = id => `/auth/daily/tasks/${encodeURIComponent(id)}/complete`;
@@ -709,7 +1012,7 @@ function initDoneColumn(tableArg, role) {
         $chk.prop('disabled', true);
 
         const url = checked ? COMPLETE_URL(taskId) : UNDO_URL(taskId);
-        const payload = { for_date: $dateInput.val() || new Date().toISOString().slice(0, 10), remarks: remarks };
+        const payload = { for_date: $inputDate.val() || new Date().toISOString().slice(0, 10), remarks: remarks };
 
         // axios POST with credentials
         axios.post(url, payload, { withCredentials: true })
