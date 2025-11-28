@@ -614,7 +614,7 @@ async function loadData(url = '/auth/daily/tasks/data') {
         titleCaseTableHeaders($thead, [], ['id']);
 
         // Always hide a few internal columns for a cleaner UI
-        hideTableColumns($table, ['task_list_id', 'assignment_id', 'assignment_start_date', 'assignment_end_date', 'completion_id', 'assignment_active', 'created_at', 'updated_at', 'task_active']);
+        hideTableColumns($table, ['task_list_id', 'assignment_id', 'assignment_start_date', 'assignment_end_date', 'completion_id', 'assignment_active', 'created_at', 'updated_at', 'task_active', 'assigned_on']);
 
         // Additional role-based hides
         if (role === 'user') {

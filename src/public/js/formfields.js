@@ -281,7 +281,17 @@ export default {
         for_date: { label: 'Task Completed On', type: 'date', required: true },
         remarks: { label: 'Any Remarks', type: 'textarea', required: true },
         task_id: { type: 'hidden'},
-    }
+    },
+
+
+    specialTask: {
+        task_name: { label: 'Task Name', type: 'text', requird: true },
+        description: { label: 'Description', type: 'textarea' },
+        // priority: { label: 'Priority', type: 'select', options: ['low', 'medium', 'high', 'critical'], default: 'medium '},
+        category: { label: 'Category', type: 'text' },
+        files: { label: 'Attachment', type: 'file', multiple: true },
+    },
+
 
 
 }

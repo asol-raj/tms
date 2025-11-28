@@ -23,12 +23,21 @@ export const SpecialTasksModel = {
   },
 
   async getTaskById(id) {
-    const sql = `SELECT * FROM special_tasks WHERE id = ?`;
+    const sql = `
+    SELECT 
+      st.*,
+      cb.fullname AS createdby_name,
+      at.fullname AS assignedto_name
+    FROM special_tasks st
+      JOIN users cb ON cb.id = st.created_by
+      LEFT JOIN users at ON at.id = st.assigned_to
+    WHERE st.id = ?
+  `;
     const rows = await query(sql, [id]);
     return rows[0] || null;
   },
 
-  async listTasks({ limit = 25, offset = 0, status, assigned_to, created_by }) {
+  async listTasks_({ limit = 25, offset = 0, status, assigned_to, created_by }) {
     const conditions = [];
     const params = [];
 
@@ -53,6 +62,45 @@ export const SpecialTasksModel = {
     const rows = await query(sql, params);
     return rows;
   },
+
+  async listTasks({ limit = 25, offset = 0, status, assigned_to, created_by }) {
+    const conditions = [];
+    const params = [];
+
+    if (status) {
+      conditions.push('t.status = ?');
+      params.push(status);
+    }
+    if (assigned_to) {
+      conditions.push('t.assigned_to = ?');
+      params.push(assigned_to);
+    }
+    if (created_by) {
+      conditions.push('t.created_by = ?');
+      params.push(created_by);
+    }
+
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const sql = `
+        SELECT 
+          t.id, t.task_name, t.description, t.priority, t.status, t.category, 
+          u1.fullname as created_by, u2.fullname as assigned_to,
+          date_format(t.created_at, '%m-%d-%Y, %r') as created_at
+        FROM special_tasks t
+        LEFT JOIN users u1 ON u1.id = t.created_by
+        LEFT JOIN users u2 ON u2.id = t.assigned_to
+        ${where}
+        ORDER BY t.created_at DESC
+        LIMIT ? OFFSET ?
+      `;
+
+    params.push(Number(limit));
+    params.push(Number(offset));
+
+    return await query(sql, params);
+  },
+
 
   async updateTask(id, fields = {}) {
     const keys = Object.keys(fields);
@@ -88,13 +136,72 @@ export const CorrespondenceModel = {
 
   async listByTask(task_id) {
     const sql = `
-      SELECT id, task_id, sender_id, message, is_internal, created_at
-      FROM special_task_correspondence
-      WHERE task_id = ?
-      ORDER BY created_at ASC
-    `;
+    SELECT 
+      stc.id,
+      stc.task_id,
+      stc.sender_id,
+      stc.message,
+      stc.is_internal,
+      stc.created_at,
+      u.fullname AS sender_name
+    FROM special_task_correspondence stc
+    JOIN users u ON u.id = stc.sender_id
+    WHERE stc.task_id = ?
+    ORDER BY stc.created_at ASC
+  `;
     return await query(sql, [task_id]);
-  }
+  },
+  // still inside CorrespondenceModel
+  async getById(id) {
+    const sql = `
+    SELECT 
+      stc.id,
+      stc.task_id,
+      stc.sender_id,
+      stc.message,
+      stc.is_internal,
+      stc.created_at,
+      u.fullname AS sender_name
+    FROM special_task_correspondence stc
+    JOIN users u ON u.id = stc.sender_id
+    WHERE stc.id = ?
+    LIMIT 1
+  `;
+    const rows = await query(sql, [id]);
+    return rows[0] || null;
+  },
+
+  async updateById(id, { message, is_internal = null }) {
+    const fields = [];
+    const params = [];
+
+    if (typeof message === 'string') {
+      fields.push('message = ?');
+      params.push(message);
+    }
+    if (is_internal !== null && is_internal !== undefined) {
+      fields.push('is_internal = ?');
+      params.push(is_internal ? 1 : 0);
+    }
+
+    if (!fields.length) return { affectedRows: 0 };
+
+    params.push(id);
+    const sql = `
+    UPDATE special_task_correspondence 
+    SET ${fields.join(', ')}
+    WHERE id = ?
+  `;
+    return await query(sql, params);
+  },
+
+  // Delete a correspondence record by ID
+  async deleteById(id) {
+    const sql = `DELETE FROM special_task_correspondence WHERE id = ?`;
+    return await query(sql, [id]);
+  },
+
+
 };
 
 export const AttachmentsModel = {
@@ -131,5 +238,19 @@ export const AttachmentsModel = {
     const sql = `SELECT * FROM special_task_attachments WHERE id = ? LIMIT 1`;
     const rows = await query(sql, [id]);
     return rows[0] || null;
-  }
+  },
+
+  // --- inside AttachmentsModel ---
+  async updateById(id, fields = {}) {
+    const keys = Object.keys(fields);
+    if (!keys.length) return { affectedRows: 0 };
+
+    const setClause = keys.map(k => `\`${k}\` = ?`).join(', ');
+    const params = keys.map(k => fields[k]);
+    params.push(id);
+
+    const sql = `UPDATE special_task_attachments SET ${setClause} WHERE id = ?`;
+    return await query(sql, params);
+  },
+
 };

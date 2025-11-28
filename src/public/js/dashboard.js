@@ -427,6 +427,10 @@ async function setTable(data) {
             e.title = 'Double Click to ADD/EDIT Comments!'
         })
 
+        if(role === 'user'){
+            $table.find(`[data-key="assigned_to"]`).addClass('d-none');
+        }
+
         // jq('div.dataTable').html(tbl.table);
         // jq('#dataTable').html(tbl.table);
     } catch (error) {

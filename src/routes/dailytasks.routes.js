@@ -4,10 +4,10 @@ import * as ctrl from '../controllers/dailyTasks.controller.js';
 const log = console.log;
 // all routes start here with /auth/daily/tasks
 
-router.use((req, res, next)=>{
-    log(req.baseUrl, req.host, req.hostname,);
-    next();
-})
+// router.use((req, res, next)=>{
+//     log(req.baseUrl, req.host, req.hostname,);
+//     next();
+// })
 
 router.get('/', (req, res) => res.render('dailytasks', { title: 'Daily Tasks', user: req.user }));
 router.get('/data', ctrl.getAllTasks);

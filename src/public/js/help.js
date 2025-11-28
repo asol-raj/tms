@@ -2343,3 +2343,20 @@ export function inlineEditBox($tbody, colname, callback) {
     open(this);
   });
 }
+
+
+export function reorderColumns(data, order) {
+  return data.map(item => {
+    const reordered = {};
+    order.forEach(key => {
+      if (key in item) reordered[key] = item[key];
+    });
+
+    // Add any leftover keys (optional)
+    Object.keys(item).forEach(key => {
+      if (!order.includes(key)) reordered[key] = item[key];
+    });
+
+    return reordered;
+  });
+}

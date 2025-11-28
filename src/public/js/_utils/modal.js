@@ -76,7 +76,7 @@ export default function showModal(title, size = "lg", hideFooter = false) {
   const xlModal = showModal('XL Modal for Data', 'xl');
   xlModal.find('.modal-body').append('<ul><li>Item 1</li><li>Item 2</li></ul>');
   xlModal.data('bs.modal').show();
- */
+*/
 
 
 

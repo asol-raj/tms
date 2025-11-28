@@ -30,6 +30,8 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'src', 'views')); // Uses new __dirname
 app.use(expressEjsLayouts); // 2. Used imported module
 app.use(express.static(path.join(__dirname, 'src', 'public'))); // Uses new __dirname
+app.use('/static/special_tasks', express.static(path.join(process.cwd(), 'src', 'uploads', 'special_tasks')));
+
 
 // 🔹 Middleware to set default navbar visibility
 app.use((req, res, next) => {

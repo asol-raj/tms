@@ -1,3 +1,4 @@
+
 <div class="container-fluid">
     <div class="row mt-2 py-2 align-items-center">
         <div class="col-12 col-sm-3 mb-3 mb-sm-0 d-flex align-items-center gap-2">
@@ -9,22 +10,18 @@
 
         <div class="col-12 col-xl-9">
             <div class="d-flex justify-content-end align-items-center gap-3 gap-xl-5">
-                <!-- <div class="position-relative py-2 px-4 text-bg-secondary border border-secondary rounded-pill">
-                    Marker <svg width="1em" height="1em" viewBox="0 0 16 16"
-                        class="position-absolute top-100 start-50 translate-middle mt-1" fill="var(--bs-secondary)"
-                        xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path
-                            d="M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
-                    </svg>
-                </div> -->
-                <input type="search" name="search" id="searchTask" placeholder="Search tasks..." class="form-control me-auto ms-xl-0"
-                    style="width: clamp(250px, 20vw, 450px);">
-                <!-- <div class="vr"></div> -->
-                <button class="btn btn-bd-outline-sunset px-lg-5 border-2 position-relative" id="viewPosts"><i
-                        class="bi bi-cup-hot-fill"></i> FEEDS
+                <input type="search" name="search" id="searchTask" placeholder="Search tasks..."
+                    class="form-control me-auto ms-xl-0" style="width: clamp(250px, 20vw, 450px);">
+
+                <a href="/auth/special/tasks" class="fs-1 text-success"><i class="bi bi-chat-right-text-fill"></i></a>
+
+                <button class="btn btn-bd-outline-sunset px-lg-5 border-2 position-relative" type="button"
+                    data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">
+                    <i class="bi bi-cup-hot-fill"></i> FEEDS
                     <span
                         class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success text-white"
-                        id="newPosts"><span class="visually-hidden">unread messages</span></span>
+                        id="newPosts"><span class="visually-hidden">unread messages</span>
+                    </span>
                 </button>
                 <a href="/auth/daily/tasks" class="btn btn-bd-outline-primary px-xl-4 border-2 me-auto me-sm-0"
                     title="View Daily Tasks List"><i class="bi bi-view-list"></i> DAILY TASKS</a>
@@ -65,7 +62,7 @@
 <hr>
 <div class="container-fluid">
     <div class="row g-4">
-        <div class="col-9 border-end" id="leftSide">
+        <div class="col-12">
             <div class="my-4 d-flex flex-wrap justify-content-between align-items-center gap-5 filter-buttons"
                 id="actionBtn">
                 <button class="btn btn-success px-lg-5 border-2 me-auto filter-btn fw-semibold all">All</button>
@@ -83,46 +80,55 @@
 
         </div>
         <!-- rgb(184, 255, 251) -->
-        <div class="col-3 updates bg-light-subtle" id="rightSide">
-            <div class="postsfeeds">
-                <div class="d-flex justify-content-between align-items-center position-relative">
-                    <h4 class="mb-0">Posts & Feeds</h4>
-                    <button class="btn-close" id="togglePosts" title="Hide Posts & Feeds"></button>
-                    <!-- <p>Scroll down to see the floating button.</p> -->
-                </div>
+        <!-- <div class="col-3 updates bg-light-subtle" id="rightSide"></div> -->
+    </div>
+</div>
 
-                <div id="createPostContainer" class="posts my-3 p-3 border rounded-2 d-none">
-                    <h5>Create a New Post</h5>
-                    <hr class="my-3">
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel" style="--bs-offcanvas-width: 500px;">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasRightLabel">
+            Posts & Feeds
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body position-relative">
+        <div class="postsfeeds">
+            <!-- <div class="d-flex justify-content-between align-items-center position-relative">
+                <h4 class="mb-0">Posts & Feeds</h4>
+                <button class="btn-close" id="togglePosts" title="Hide Posts & Feeds"></button>
+            </div> -->
 
-                    <!-- Note: I fixed the ID from 'creaetPost' to 'createPost' -->
-                    <form id="createPost">
-                        <textarea name="post" id="postMsg" class="form-control mb-3" rows="4"
-                            placeholder="Post New Updates Here"></textarea>
+            <div id="createPostContainer" class="posts my-3 p-3 border rounded-2 d-none">
+                <h5>Create a New Post</h5>
+                <hr class="my-3">
 
-                        <!-- Button wrapper for side-by-side buttons -->
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary w-100">Post</button>
-                            <!-- This 'Cancel' button will also hide the form -->
-                            <button type="button" id="cancelPostBtn" class="btn btn-secondary w-100">Cancel</button>
-                        </div>
-                    </form>
-                </div>
+                <!-- Note: I fixed the ID from 'creaetPost' to 'createPost' -->
+                <form id="createPost">
+                    <textarea name="post" id="postMsg" class="form-control mb-3" rows="4"
+                        placeholder="Post New Updates Here"></textarea>
 
-                <!-- This is the 'view-posts' div from your other code -->
-                <div class="view-posts mt-4">
-                    <!-- Your loaded posts will go here -->
-                </div>
-
+                    <!-- Button wrapper for side-by-side buttons -->
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100">Post</button>
+                        <!-- This 'Cancel' button will also hide the form -->
+                        <button type="button" id="cancelPostBtn" class="btn btn-secondary w-100">Cancel</button>
+                    </div>
+                </form>
             </div>
 
-            <? if(user.role !== 'user'){ ?>
-            <button id="showPostFormBtn" class="btn btn-primary btn-lg rounded-circle position-fixed bottom-0 end-0 m-4"
-                type="button" title="Show Create New Post">
-                <i class="bi bi-plus-lg"></i>
-            </button>
-            <? } ?>
+            <!-- This is the 'view-posts' div from your other code -->
+            <div class="view-posts mt-4">
+                <!-- Your loaded posts will go here -->
+            </div>
+
         </div>
+
+        <? if(user.role !== 'user'){ ?>
+        <button id="showPostFormBtn" class="btn btn-primary btn-lg rounded-circle position-absolute bottom-0 end-0 m-4"
+            type="button" title="Show Create New Post">
+            <i class="bi bi-plus-lg"></i>
+        </button>
+        <? } ?>
     </div>
 </div>
 
@@ -145,12 +151,6 @@
         border-radius: 2px;
     } */
 
-    /* .filter-buttons .filter-btn.active {
-        transform: scale(1.05);
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        transition: all 0.15s ease-in-out;
-    } */
-
     #showPostFormBtn {
         /* position: fixed; */
         /* Floats relative to the viewport */
@@ -169,59 +169,7 @@
         /* Prevents text selection on double click */
         user-select: none;
     }
-
-    /* --- Default State (Sidebar Visible) --- */
-
-    #leftSide {
-        /* Your default 'col-9' styles */
-        width: 75%;
-        transition: width 0.3s ease;
-        /* Bonus: nice animation */
-    }
-
-    #rightSide {
-        /* Your default 'col-3' styles */
-        width: 25%;
-        display: block;
-        transition: all 0.3s ease;
-    }
-
-    /* --- Toggled State (Sidebar Hidden) --- */
-
-    body.sidebar-hidden #leftSide {
-        /* Your 'col-12' styles */
-        width: 100%;
-    }
-
-    body.sidebar-hidden #rightSide {
-        display: none;
-    }
 </style>
 
 <script src="/_libs/flatpickr.js"></script>
 <script type="module" src="/js/dashboard.js"></script>
-
-<!-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> -->
-<script src="/_libs/jquery/jquery.js"></script>
-<script>
-    // Alias jQuery to 'jq' to match your code style
-    const jq = jQuery.noConflict();
-    jq('body').addClass('sidebar-hidden')
-    // jq('#hidePosts').on('click', () => {
-    //     jq("#rightSide").addClass('d-none');
-    //     jq('#leftSide').removeClass('col-9').addClass('col-12');
-    //     jq('#viewPosts').removeClass('disabled');
-    // })
-
-    // jq('#viewPosts').on('click', () => {
-    //     jq('#leftSide').removeClass('col-12').addClass('col-9');
-    //     jq("#rightSide").removeClass('d-none');
-    //     jq('#viewPosts').addClass('disabled');
-    // })
-
-    jq('#togglePosts, #viewPosts').on('click', () => {
-        jq('body').toggleClass('sidebar-hidden');
-        // jq('#viewPosts').toggleClass('disabled');
-    });
-
-</script>

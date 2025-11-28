@@ -188,7 +188,7 @@ export const getTasks = async (options = {}) => {
   sql += `
     GROUP BY tl.id
     ORDER BY FIELD(tl.priority, 'high', 'medium', 'low') DESC, tl.id;
-  `;
+    `;
   // log(sql);
   // Execute
   const [rows] = await pool.query(sql, params);

@@ -170,7 +170,7 @@ const TaskListModel = {
       }
 
       // combine SQL
-      const finalSql = sql + (whereParts.length ? (" AND " + whereParts.join(" AND ")) : "") + " GROUP BY l.id ORDER BY l.title ASC";
+      const finalSql = sql + (whereParts.length ? (" AND " + whereParts.join(" AND ")) : "") + " GROUP BY l.id ORDER BY l.id ASC";
 
       const [rows] = await pool.query(finalSql, params);
 

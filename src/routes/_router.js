@@ -14,9 +14,9 @@ import specialTasksRoutes from "./specialTasksRoutes.js";
 
 const router = express.Router();
 
-router.get('/', (req, res) => res.render('index', { title: 'TMS' }));
-router.get('/login', redirectIfAuthenticated, (req, res) => res.render('login', { title: 'TMS Login' }));
-router.get('/admin/register', (req, res) => res.render('register', { title: 'TMS Signup' }));
+router.get('/', (req, res) => res.render('index', { hideNavbar: true, title: 'TMS' }));
+router.get('/login', redirectIfAuthenticated, (req, res) => res.render('login', { hideNavbar: true,  title: 'TMS Login' }));
+router.get('/admin/register', (req, res) => res.render('register', { hideNavbar: true,  title: 'TMS Signup' }));
 
 
 // These routes MUST be public.
@@ -40,10 +40,10 @@ router.use('/auth/tasklist', taskListRoutes);
 router.use("/auth/tasklist/assignments", userTaskAssignmentRoutes);
 router.use("/auth/assignments", assignmentRoutes);
 router.use("/auth/daily/tasks", dailyTaskRoutes);
-router.use("/auth/speical/task", specialTasksRoutes);
+router.use("/auth/special/tasks", specialTasksRoutes);
 
 router.get('/403', (req, res) => res.render('403', { title: 'Access Restricted' }))
-router.get('/auth/dashboard', (req, res) => res.render('dashboard', { title: 'Dashboard', user: req.user }));
+router.get('/auth/dashboard', (req, res) => res.render('dashboard', { title: 'TMS Dashboard', user: req.user }));
 router.get('/auth/settings', isAdmin, (req, res) => res.render('settings', { title: 'Settings', user: req.user }));
 router.get('/auth/posts', (req, res) => res.render('posts', { title: 'Posts', user: req.user }));
 
@@ -64,8 +64,5 @@ router.post('/auth/create/post', createPost);
 router.patch('/auth/inline/edit', inlineUpdateController);
 
 // Task templates (CRUD)
-
-
-
 
 export default router;

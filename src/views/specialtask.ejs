@@ -1,0 +1,73 @@
+<div class="container">
+    <div class="row mt-2 py-2 align-items-center bg-light">
+        <div class="col-3 mb-3 mb-sm-0 d-flex align-items-center gap-2">
+            <span class="fw-bold mb-0 fs-1 text-primary nav-link" title="Task Mamagement System">TMS</span>
+            <span class="text-secondary">
+                <?= user.fullname ?>
+            </span>
+        </div>
+
+        <div class="col-9">
+            <div class="d-flex justify-content-end align-items-center gap-3 gap-xl-5">
+                <input type="search" name="search" id="searchTask" placeholder="Search tasks..." class="form-control"
+                    style="width: clamp(250px, 20vw, 450px);">
+
+                <? if(user.role !== 'user'){ ?>
+                <button class="btn btn-bd-primary px-xl-5 create-task border-2" title="Create A New Task"><i
+                        class="bi bi-plus-lg"></i> TASK</button>
+                <? } ?>
+
+                <div class="dropdown">
+                    <div class="d-flex justify-content-center align-items-center dropdown-toggle"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="fs-2 user-avatar rounded-circle d-flex justify-content-center align-items-center"
+                            style="width: 34px; height: 34px; font-size: 0.9rem;">
+                            <i class="bi bi-person-fill"></i>
+                        </span>
+                    </div>
+
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><span class="dropdown-item" role="button" id="updateProfile">Profile</span></li>
+                        <li><span class="dropdown-item" role="button" id="changePwd">Change Password</span></li>
+                        <!-- <li><span class="dropdown-item disabled" role="button">Show Posts</span></li> -->
+                        <li><a class="dropdown-item" href="/auth/daily/tasks">Daily Tasks</a></li>
+
+                        <? if(user.role === 'admin'){ ?>
+                        <li><a class="dropdown-item" href="/auth/settings">Settings</a></li>
+                        <? } ?>
+
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop"
+        aria-controls="staticBackdrop">
+        Toggle static offcanvas
+    </button> -->
+
+    <div class="specialTasks my-5" id="specialTasks"></div>
+    <div id="specialTasksContainer"></div>
+    <input type="hidden" id="currentUserId" value="<?= user.id ?>">
+
+</div>
+
+<!-- <div class="offcanvas offcanvas-end" data-bs-backdrop="static" tabindex="-1" id="staticBackdrop"
+    aria-labelledby="staticBackdropLabel" style="--bs-offcanvas-width: 700px;">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="staticBackdropLabel">Offcanvas</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div>
+            I will not close if you click outside of me.
+        </div>
+    </div>
+</div> -->
+
+
+<script type="module" src="/js/specialTasks.js"></script>
