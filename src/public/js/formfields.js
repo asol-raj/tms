@@ -72,7 +72,7 @@ export default {
     changePwd: {
         currentPassword: { label: 'Old Password', type: 'password', required: true },
         newPassword: { label: 'New Password', type: 'password', message: 'Minimum 6 characters long!', required: true },
-        confirmPwd: { label: 'Confirm Password', type: 'password', required: true },
+        confirmPwd: { label: 'Confirm New Password', type: 'password', required: true },
     },
 
     posts: {

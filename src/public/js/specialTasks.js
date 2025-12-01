@@ -1,7 +1,7 @@
 // specialTasks.js (updated big time)
 
 import createAdvanceForm from './_utils/advanceCreateFrom.js';
-import { createFlyoutMenu, createTable, fetchData, hideTableColumns, jq, log, titleCaseTableHeaders } from './help.js';
+import { addColumnBorders, createFlyoutMenu, createTable, fetchData, hideTableColumns, jq, log, titleCaseTableHeaders } from './help.js';
 import showModal from './_utils/modal.js';
 import showCanvas from './_utils/canvas.js';
 import attachEditableControls from './_utils/flyoutmenu.js';
@@ -152,10 +152,10 @@ function buildCorrespondenceHtml(correspondence = []) {
     return `
         <div class="list-group mb-3">
             ${correspondence
-                .map(c => {
-                    const isOwner = c.sender_id === CURRENT_USER_ID;
+            .map(c => {
+                const isOwner = c.sender_id === CURRENT_USER_ID;
 
-                    return `
+                return `
                         <div class="list-group-item border-0 border-start border-4 mb-2 ps-3 corr-item" 
                              data-corr-id="${c.id}">
                             
@@ -167,28 +167,25 @@ function buildCorrespondenceHtml(correspondence = []) {
                                         <strong>#${c.id}</strong> 
                                         • by ${escapeHtml(c.sender_name)} 
                                         • ${formatDate(c.created_at)}
-                                        ${
-                                            Number(c.is_internal)
-                                                ? '<span class="badge bg-warning-subtle text-warning-emphasis ms-2">Internal</span>'
-                                                : ''
-                                        }
+                                        ${Number(c.is_internal)
+                        ? '<span class="badge bg-warning-subtle text-warning-emphasis ms-2">Internal</span>'
+                        : ''
+                    }
                                     </div>
 
                                     <div class="corr-message" data-corr-id="${c.id}">
-                                        ${
-                                            c.message
-                                                ? `<div>${escapeHtml(c.message)}</div>`
-                                                : `<div class="text-muted fst-italic">No message</div>`
-                                        }
+                                        ${c.message
+                        ? `<div>${escapeHtml(c.message)}</div>`
+                        : `<div class="text-muted fst-italic">No message</div>`
+                    }
                                     </div>
 
                                     ${buildCorrAttachmentsHtml(c.attachments || [])}
                                 </div>
 
                                 <!-- RIGHT SIDE: EDIT + DELETE BUTTONS (visible only for creator) -->
-                                ${
-                                    isOwner
-                                        ? `
+                                ${isOwner
+                        ? `
                                         <div class="btn-group btn-group-sm flex-column flex-md-row mt-1 mt-md-0">
                                             <button 
                                                 type="button" 
@@ -209,20 +206,19 @@ function buildCorrespondenceHtml(correspondence = []) {
                                             </button>
                                         </div>
                                         `
-                                        : ""
-                                }
+                        : ""
+                    }
 
                             </div>
                         </div>
                     `;
-                })
-                .join("")}
+            })
+            .join("")}
         </div>
     `;
 }
 
 function buildTaskDetailsHtml(task, attachments = [], correspondence = []) {
-    log(task);
     ensureDetailStyles();
 
     const priorityClass = priorityBadgeClass(task?.priority);
@@ -524,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadData() {
     try {
-        let res = await fetchData(API.list); log(res);
+        let res = await fetchData(API.list);
         let arr = res?.tasks || [];
 
         let tbl = createTable({ data: arr });
@@ -539,31 +535,36 @@ async function loadData() {
         titleCaseTableHeaders($thead, [], ['id']);
         hideTableColumns($table, ['updated_at']);
 
+        $tbody.find(`[data-key="task_name"]`).addClass('role-btn').each(function () {
+            jq(this).off('click').on('click', (e) => {
+                const taskId = jq(e.target).closest('tr').find(`[data-key="id"]`).data('value');
+                viewTaskDetails(taskId);
+            })
+        }).prop('title', 'Click to view task details')
+
         $tbody.find(`[data-key="id"]`).addClass('role-btn text-primary').each(function (i, e) {
             jq(e).on('click', () => {
-                let data = arr[i]; log(data);
+                let data = arr[i];
 
                 createFlyoutMenu(e, [
-                    { key: 'View', id: 'viewDetails' },
                     { key: 'Edit', id: 'editDetails' },
+                    { key: 'View', id: 'viewDetails' },
                     { key: 'Cancel' }
                 ]);
 
-                jq('#editDetails').off('click').on('click', () => {
-                    let $modal = showModal('Edit Task').data('bs.modal').show();
-                    let $mb = $modal.find('div.modal-body');
-                    $mb.html('Edit UI not implemented yet.');
-                });
+                if (role === 'user') jq('#editDetails').addClass('disabled');
 
-                jq('#viewDetails').off('click').on('click', async () => {
+                if (role === 'admin') {
+                    jq('#editDetails').off('click').on('click', () => {
+                        let $modal = showModal('Edit Task').data('bs.modal').show();
+                        let $mb = $modal.find('div.modal-body');
+                        $mb.html('Edit UI not implemented yet.');
+                    });
+                }
+
+                jq('#viewDetails').off('click').on('click', () => {
                     const taskId = data.id;
-                    const $canvas = showCanvas('Special Task Details', { side: 'end', width: '900px' });
-                    const $body = $canvas.find('div.offcanvas-body');
-
-                    $body.html('<div class="text-muted">Loading task details...</div>');
-                    $canvas.data("bs.offcanvas").show();
-
-                    await reloadTaskDetails(taskId, $body);
+                    viewTaskDetails(taskId);
                 });
             });
         });
@@ -592,8 +593,43 @@ async function loadData() {
             await loadData();
         }, () => role !== 'user');
 
+        const statusOptions = {
+            "open": { text: "open", bgColor: '#ff4863', textColor: 'white', class: 'fw-bold' },
+            "pending": { text: "pending", bgColor: '#ffe675', textColor: 'black' }, //#ffe675 , #b9ff75
+            "closed": { text: "closed", bgColor: '', textColor: 'black' }, //#00bfff
+            "completed": { text: "completed", bgColor: '#4197ff', textColor: 'white' }, //#00bfff
+            "archived": { text: "archived", bgColor: '#969696', textColor: 'white' }, //#00bfff
+        };
+
+        attachEditableControls($table[0], 'status', statusOptions, async (cell, value) => {
+            const id = jq(cell).closest('tr').find(`[data-key="id"]`).data('value');
+            const payload = { table: 'special_tasks', field: 'status', value, id };
+            if (role == 'user') return;
+
+            await fetch('/auth/inline/edit', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            // 🔁 Reload current active filter view
+            await loadData();
+        }, () => role !== 'user');
+
         $div.html(table);
+        addColumnBorders($table)
     } catch (error) {
         log(error);
     }
+}
+
+
+async function viewTaskDetails(taskId) {
+    const $canvas = showCanvas('Special Task Details', { side: 'end', width: '900px' });
+    const $body = $canvas.find('div.offcanvas-body');
+
+    $body.html('<div class="text-muted">Loading task details...</div>');
+    $canvas.data("bs.offcanvas").show();
+
+    await reloadTaskDetails(taskId, $body);
 }

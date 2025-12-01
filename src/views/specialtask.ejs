@@ -1,10 +1,8 @@
-<div class="container">
-    <div class="row mt-2 py-2 align-items-center bg-light">
+<div id="alert-container"></div>
+<div class="container-fluid">
+    <div class="row mt-2 py-2 align-items-center">
         <div class="col-3 mb-3 mb-sm-0 d-flex align-items-center gap-2">
-            <span class="fw-bold mb-0 fs-1 text-primary nav-link" title="Task Mamagement System">TMS</span>
-            <span class="text-secondary">
-                <?= user.fullname ?>
-            </span>
+            <span class="fs-3 text-primary" title="Task Mamagement System">SPECIAL TASKS</span>
         </div>
 
         <div class="col-9">
@@ -13,35 +11,8 @@
                     style="width: clamp(250px, 20vw, 450px);">
 
                 <? if(user.role !== 'user'){ ?>
-                <button class="btn btn-bd-primary px-xl-5 create-task border-2" title="Create A New Task"><i
-                        class="bi bi-plus-lg"></i> TASK</button>
+                <button class="btn btn-bd-primary px-3 create-task border-2" title="Create A New Task"><i class="bi bi-plus-lg"></i> TASK</button>
                 <? } ?>
-
-                <div class="dropdown">
-                    <div class="d-flex justify-content-center align-items-center dropdown-toggle"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="fs-2 user-avatar rounded-circle d-flex justify-content-center align-items-center"
-                            style="width: 34px; height: 34px; font-size: 0.9rem;">
-                            <i class="bi bi-person-fill"></i>
-                        </span>
-                    </div>
-
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><span class="dropdown-item" role="button" id="updateProfile">Profile</span></li>
-                        <li><span class="dropdown-item" role="button" id="changePwd">Change Password</span></li>
-                        <!-- <li><span class="dropdown-item disabled" role="button">Show Posts</span></li> -->
-                        <li><a class="dropdown-item" href="/auth/daily/tasks">Daily Tasks</a></li>
-
-                        <? if(user.role === 'admin'){ ?>
-                        <li><a class="dropdown-item" href="/auth/settings">Settings</a></li>
-                        <? } ?>
-
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
-                    </ul>
-                </div>
             </div>
         </div>
     </div>

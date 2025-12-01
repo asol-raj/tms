@@ -137,7 +137,7 @@ function attachEditableControls(
         cell.style.backgroundColor = "";
         cell.style.color = "";
         cell.classList.remove('no-flyout');
-        cell.classList.add('role-btn', 'align-middle');
+        cell.classList.add('role-btn');
 
         if (!value) {
             cell.className = cell.className + ' text-end';

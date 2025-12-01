@@ -7,90 +7,87 @@ import inlineEditAdvance from './_utils/inlineEditAdvance.js';
 import attachEditableControls from './_utils/flyoutmenu.js';
 import { applySearch } from './_utils/searchTools.js';
 import applySearchWithObserver from './_utils/searchToolsAdvance.js';
+import createAdvanceForm from './_utils/advanceCreateFrom.js';
 
 // Wait for the document to be ready
 
-async function countFeeds(){
-    try {
-        let sql = "SELECT COUNT(*) AS cnt FROM posts WHERE DATE(created_at) = CURDATE();";
-        let res = await advanceMysqlQuery({ key: 'na', qry: sql }); log(res.data);
-        let cnt = res?.data[0].cnt || 0;
-        let pst = cnt ? `+${cnt}`: 0; log(pst);
-        jq('#newPosts').html(pst);
-    } catch (error) {
-        log(error);
-    }
-}
+
 
 document.addEventListener('DOMContentLoaded', async () => {
     loadData();
-    loadPosts();
-    
+    // loadPosts();
 
-    // --- Selectors ---
-    const $formContainer = jq('#createPostContainer');
-    const $form = jq('#createPost');
-    const $showBtn = jq('#showPostFormBtn');
-    const $cancelBtn = jq('#cancelPostBtn');
-    const $postMsg = jq('#postMsg');
 
-    // --- Helper Functions ---
-    function showForm() {
-        $showBtn.hide(); // Hide the '+' button
-        $formContainer.removeClass('d-none'); // Show the form
-        $postMsg.focus(); // Good UX: auto-focus the textarea
-    }
+    // // --- Selectors ---
+    // const $formContainer = jq('#createPostContainer');
+    // const $form = jq('#createPost');
+    // const $showBtn = jq('#showPostFormBtn');
+    // const $cancelBtn = jq('#cancelPostBtn');
+    // const $postMsg = jq('#postMsg');
 
-    function hideForm() {
-        $formContainer.addClass('d-none'); // Hide the form
-        $showBtn.show(); // Show the '+' button
-        $postMsg.val(''); // Clear the textarea
-    }
+    // // --- Helper Functions ---
+    // function showForm() {
+    //     $showBtn.hide(); // Hide the '+' button
+    //     $formContainer.removeClass('d-none'); // Show the form
+    //     $postMsg.focus(); // Good UX: auto-focus the textarea
+    // }
 
-    // --- Event Handlers ---
+    // function hideForm() {
+    //     $formContainer.addClass('d-none'); // Hide the form
+    //     $showBtn.show(); // Show the '+' button
+    //     $postMsg.val(''); // Clear the textarea
+    // }
 
-    // 1. Click the floating '+' button
-    $showBtn.on('click', showForm);
+    // // --- Event Handlers ---
 
-    // 2. Click the 'Cancel' button
-    $cancelBtn.on('click', hideForm);
+    // // 1. Click the floating '+' button
+    // $showBtn.on('click', showForm);
 
-    $form.on('submit', async (e) => {
-        e.preventDefault();
-        try {
-            let fd = fd2obj(e.target); log(fd);
-            let res = await postData('/auth/create/post', fd);
-            loadPosts();
-            $cancelBtn.trigger('click');
-        } catch (error) {
-            log(error);
-        }
-    });
+    // // 2. Click the 'Cancel' button
+    // $cancelBtn.on('click', hideForm);
+
+    // $form.on('submit', async (e) => {
+    //     e.preventDefault();
+    //     try {
+    //         let fd = fd2obj(e.target); log(fd);
+    //         let res = await postData('/auth/create/post', fd);
+    //         loadPosts();
+    //         $cancelBtn.trigger('click');
+    //     } catch (error) {
+    //         log(error);
+    //     }
+    // });
 
     jq('#updateProfile').on('click', async () => {
-        const res = await fetchData('/auth/user/profile'); //log(res.profile); return;
-        const $modal = showModal('Update Profile', 'md', true);
-        const form = createFormSmart({ title: 'user_profile', formData: res.profile, floatingLabels: false })
-        const $body = $modal.find('div.modal-body');
-        $body.html(form);
-        const $form = $body.find('form');
-        $form.on('submit', async (e) => {
-            e.preventDefault();
-            try {
-                let fd = fd2obj(e.target); log(fd);
-                let rsp = await postData('/auth/update/profile', fd); log(rsp);
-                if (rsp.affectedRows) $modal.data('bs.modal').hide();
-            } catch (error) {
-                log(error);
+        const res = await fetchData('/auth/user/profile');
+        const $modal = createAdvanceForm({
+            title: 'user_profile',
+            formData: res.profile,
+            floatingLabels: false,
+            modal: true,
+            modalSize: 'md',
+            modalTitle: 'Users Profile',
+            hideFooter: true,
+            submitBtnText: 'Update',
+            onSubmit: async (api) => {
+                try {
+                    let rsp = await postData('/auth/update/profile', api.values);
+                    if (rsp.userResult.affectedRows) {
+                        api.onSuccess('Profile Updated Successfully');
+                        // api.setButtonText('Updated')
+                    }
+                } catch (error) {
+                    log(error);
+                }
             }
-        })
-        $modal.data('bs.modal').show();
+        });
 
+        $modal.data('bs.modal').show();
     })
 
     jq('#changePwd').on('click', () => {
         try {
-            const form = createFormSmart({ title: 'changePwd' });
+            const form = createFormSmart({ title: 'changePwd', floatingLabels: false });
             const $modal = showModal('Change Password', 'md', true);
             const $body = $modal.find('.modal-body');
             $body.html(form);
@@ -98,11 +95,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             $form.on('submit', async (e) => {
                 e.preventDefault();
                 try {
-                    let fd = fd2obj(e.target); log(fd);
+                    let fd = fd2obj(e.target);
                     const { newPassword, confirmPwd } = fd;
                     if (fd.newPassword.length < 6) throw new Error('Pasword Must be 6 characters long');
                     if (newPassword !== confirmPwd) throw new Error('Password do not matach!');
-                    let res = await postData('/auth/password/change', fd); log(res);
+                    let res = await postData('/auth/password/change', fd);
                     jq('#formMsg')
                         .removeClass('text-bg-danger')
                         .addClass('text-bg-success rounded px-5').text(res.message)
@@ -167,79 +164,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
 
 });
-
-async function loadPosts() {
-    try {
-        // Your new query is now much longer, so I'll format it for readability
-        let qry = `
-            SELECT 
-                p.id, p.post, p.publish, 
-                u.fullname AS created_by, 
-                p.created_at, p.updated_at 
-            FROM posts p 
-            JOIN users u ON u.id = p.created_by 
-            WHERE p.publish=true
-            ORDER BY p.id DESC 
-            LIMIT 100;
-        `;
-
-        let res = await advanceMysqlQuery({ key: 'na', qry }); // log(res);
-        let posts = res?.data || [];
-
-        if (!posts.length) {
-            jq('div.view-posts').html('<p>No posts found.</p>');
-            return;
-        }
-
-        let $div = jq('<div>', { class: 'd-flex flex-column gap-4' });
-
-        posts.forEach(post => {
-            // Main container for this single post
-            let $postItem = jq('<div>', {
-                class: 'border-bottom rounded shadow-sm p-2'
-            });
-
-            // 1. Add the post content
-            let $postContent = jq('<div>', { class: 'h6' });
-            $postContent.text(post.post);
-
-            // 2. Create the footer container
-            //    'mt-2' adds a little space above the footer
-            let $postFooter = jq('<div>', {
-                class: 'd-flex justify-content-between mt-4'
-            });
-
-            // 3. Create "created by" element (bottom-left)
-            //    'post.created_by' now holds the user's fullname from your query
-            let $postAuthor = jq('<span>', { class: 'text-secondary small' });
-            $postAuthor.text(`By: ${post.created_by}`);
-
-            // 4. Create "created at" date element (bottom-right)
-            let date = new Date(post.created_at);
-            let formattedDate = date.toLocaleString();
-            let $postDate = jq('<span>', { class: 'text-secondary small' });
-            $postDate.text(formattedDate);
-
-            // 5. Add author and date to the footer
-            $postFooter.append($postAuthor);
-            $postFooter.append($postDate);
-
-            // 6. Add the content and the footer to the main post item
-            $postItem.append($postContent);
-            $postItem.append($postFooter);
-
-            // 7. Add this post item to the list
-            $div.append($postItem);
-        });
-
-        jq('div.view-posts').html($div);
-        countFeeds();
-
-    } catch (error) {
-        log(error);
-        jq('div.view-posts').html('<p>Error loading posts.</p>');
-    }
-}
 
 let currentFilter = 'all'; // global tracker
 
@@ -427,7 +351,7 @@ async function setTable(data) {
             e.title = 'Double Click to ADD/EDIT Comments!'
         })
 
-        if(role === 'user'){
+        if (role === 'user') {
             $table.find(`[data-key="assigned_to"]`).addClass('d-none');
         }
 

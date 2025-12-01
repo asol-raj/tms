@@ -2,10 +2,7 @@
 <div class="container-fluid">
     <div class="row mt-2 py-2 align-items-center">
         <div class="col-12 col-md-3 mb-3 mb-md-0">
-            <a href="/auth/tasklist" class="fw-bold mb-0 fs-1 text-primary nav-link">TASKS LIST</a>
-            <span class="text-secondary">
-                <?= user.fullname ?>
-            </span>
+            <span  class="fs-3 text-primary ">DAILY TASKS LIST</span>
         </div>
 
         <div class="col-12 col-md-9">
@@ -16,8 +13,6 @@
                 <!-- <select name="users" id="selectUser" class="form-select" style="width: 180px;"></select> -->
                 <? } ?>
 
-                <a href="/auth/dashboard" class="btn btn-bd-outline-primary border-2 px-md-4">DASHBOARD</a>
-                <a href="/auth/daily/tasks" class="btn btn-bd-outline-primary border-2 px-md-4">DAILY TASKS</a>
                 <button class="btn btn-bd-primary px-md-4 border-2" id="createDailyTask" title="Create Daily Task"><i class="bi bi-plus-lg"></i> TASK</button>
 
                 <? if(user.role !== 'user'){ ?>

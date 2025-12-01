@@ -174,7 +174,6 @@ CREATE TABLE IF NOT EXISTS `tasks_list` (
   INDEX `idx_tasks_list_active` (`is_active`)
 );
 
--- ALTER Table tasks_list DROP COLUMN deleted_by;
 
 -- ALTER TABLE `tasks_list`
 --     ADD COLUMN `updated_by` BIGINT UNSIGNED NULL AFTER `created_by`,
@@ -222,19 +221,39 @@ CREATE TABLE IF NOT EXISTS `users_daily_task_completions` (
   INDEX `idx_udtc_user` (`user_id`)
 );
 
+-- DROP Table if exists users_daily_task_remarks; 
 CREATE TABLE IF NOT EXISTS `users_daily_task_remarks` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `task_list_id` BIGINT UNSIGNED NOT NULL,
   `user_id` BIGINT UNSIGNED NOT NULL,
-  `remark` TEXT NOT NULL,
-  `for_date` DATE NOT NULL,
+  `for_date` DATE NOT NULL,  
+  -- remark written by the assigned user
+  `remarks` TEXT DEFAULT NULL,  
+  -- comment written by manager/assigner (or admin)
+  `comments` TEXT DEFAULT NULL,
+  `comment_by` BIGINT UNSIGNED DEFAULT NULL,  
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-  CONSTRAINT fk_udtr_tasklist FOREIGN KEY (`task_list_id`) REFERENCES `tasks_list`(`id`) ON DELETE CASCADE,
-  CONSTRAINT fk_udtr_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-
-  UNIQUE KEY ux_remarks_unique (`task_list_id`, `user_id`, `for_date`)
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  CONSTRAINT `fk_udtr_tasklist`
+    FOREIGN KEY (`task_list_id`) REFERENCES `tasks_list`(`id`) ON DELETE CASCADE,
+    
+  CONSTRAINT `fk_udtr_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+    
+  CONSTRAINT `fk_udtr_comment_by`
+    FOREIGN KEY (`comment_by`) REFERENCES `users`(`id`) ON DELETE SET NULL,  
+  -- one record per task/user/date
+  UNIQUE KEY `ux_udtr_task_user_date` (`task_list_id`, `user_id`, `for_date`),  
+  INDEX `idx_udtr_for_date` (`for_date`),
+  INDEX `idx_udtr_user` (`user_id`),
+  INDEX `idx_udtr_task` (`task_list_id`)
 );
+
+SELECT * FROM users_daily_task_remarks;
+
+SHOW tables;
 
 
 -- ======================
@@ -315,8 +334,10 @@ CREATE TABLE IF NOT EXISTS `special_task_attachments` (
   )
 );
 
-ALTER TABLE `special_task_attachments`
-  ADD CONSTRAINT `chk_task_or_corr` CHECK (
-    (task_id IS NOT NULL AND correspondence_id IS NULL) OR
-    (task_id IS NULL AND correspondence_id IS NOT NULL)
-  );
+-- ALTER TABLE `special_task_attachments`
+--   ADD CONSTRAINT `chk_task_or_corr` CHECK (
+--     (task_id IS NOT NULL AND correspondence_id IS NULL) OR
+--     (task_id IS NULL AND correspondence_id IS NOT NULL)
+--   );
+
+SELECT MD5('3f82edb7-dce6-45ec-b715-11be2cbdb82d');

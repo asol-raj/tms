@@ -158,10 +158,13 @@ WITH RECURSIVE dates AS ( SELECT DATE('2025-11-01') AS dt UNION ALL SELECT DATE_
 SELECT * FROM special_tasks;
 SELECT * FROM special_task_attachments;
 
--- TRUNCATE Table special_task_attachments;
+TRUNCATE Table users_daily_task_completions;
 
 select st.*, cb.fullname as createdby_name, at.fullname as assignedto_names
       FROM special_tasks st 
         JOIN users cb on cb.id = st.created_by
         LEFT JOIN users at on at.id = st.assigned_to
-      WHERE st.id = 8
+      WHERE st.id = 8;
+
+SELECT * FROM users_daily_task_completions;
+SELECT * FROM user_task_assignments;

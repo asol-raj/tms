@@ -9,6 +9,24 @@ export const axios = window.axios;
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
 const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 
+jq(function () {
+  const currentPath = window.location.pathname;
+
+  jq('.navbar-nav .nav-link').each(function () {
+    const linkPath = jq(this).attr('href');
+
+    // For exact match
+    if (linkPath === currentPath) {
+      jq(this).addClass('active-link');
+    }
+
+    // If you want "starts with" behavior (optional, but nice for nested routes):
+    // if (currentPath.startsWith(linkPath)) {
+    //     jq(this).addClass('active-link');
+    // }
+  });
+});
+
 /**
  * Converts a string to title case.
  *
@@ -119,6 +137,11 @@ export function hideTableColumns($table, columns = []) {
   columns.forEach(c => $table.find(`[data-key="${c}"]`).addClass('d-none'));
 }
 
+export function unHideTableColumns($table, columns = []) {
+  if (!columns.length) return;
+  columns.forEach(c => $table.find(`[data-key="${c}"]`).removeClass('d-none'));
+}
+
 export async function loadSQL(filename) {
   const response = await fetch(`/_sql/${filename}`);
   if (!response.ok) throw new Error(`Failed to load SQL file: ${filename}`);
@@ -219,21 +242,17 @@ export function createTable({
   caption = null,
   parseAs = 'currency'
 }) {
-  // If no data or empty data is provided, return false.
   if (!data || data.length === 0) {
     console.warn("createTable: No data or empty data provided.");
     return false;
   }
 
-  // Create table elements
   const table = document.createElement("table");
   const thead = document.createElement("thead");
   const tbody = document.createElement("tbody");
 
-  // --- Create Table Header (thead) ---
   const headerRow = document.createElement("tr");
 
-  // Add serial number column header if requested
   if (includeSerial) {
     const serialHeader = document.createElement("th");
     serialHeader.textContent = "#";
@@ -241,31 +260,34 @@ export function createTable({
     headerRow.append(serialHeader);
   }
 
-  // Get header keys from the first data object and build headers
   const headerKeys = [];
   for (const key in data[0]) {
     headerKeys.push(key);
     const th = document.createElement("th");
-    th.innerHTML = key;
-    th.className = "";
+    th.textContent = key;
     th.dataset.key = key;
     headerRow.append(th);
   }
 
   if (caption) {
-    let x = document.createElement('caption');
-    jq(x).text(caption).addClass('fw-bold tbl-caption');
+    const x = document.createElement("caption");
+    jq(x).text(caption).addClass("fw-bold tbl-caption");
     table.appendChild(x);
   }
 
   thead.append(headerRow);
   table.append(thead);
 
-  // --- Create Table Body (tbody) ---
+  // helper to clean cell values
+  const normalizeCellValue = (val) => {
+    if (val === null || val === undefined) return "";
+    if (typeof val === "string" && val.trim().toLowerCase() === "null") return "";
+    return val;
+  };
+
   data.forEach((rowData, index) => {
     const bodyRow = document.createElement("tr");
 
-    // Add serial number cell if requested
     if (includeSerial) {
       const serialCell = document.createElement("td");
       serialCell.textContent = index + 1;
@@ -273,23 +295,27 @@ export function createTable({
       bodyRow.append(serialCell);
     }
 
-    // Populate cells with data from the current row object
-    for (const key in rowData) {
+    // use headerKeys to keep order consistent
+    for (const key of headerKeys) {
       const td = document.createElement("td");
-      td.innerHTML = rowData[key];
+      const raw = rowData[key];
+      const value = normalizeCellValue(raw);
+
+      td.textContent = value;        // ✅ no "null" text
       td.dataset.key = key;
-      td.dataset.value = rowData[key];
+      td.dataset.value = value === null ? "" : String(value); // ✅ blank for null/undefined
+
       bodyRow.append(td);
     }
+
     tbody.append(bodyRow);
   });
 
   table.append(tbody);
 
-  // --- Apply Classes and Return ---
   if (typeof jq !== "undefined") {
     jq(table).addClass("table css-serial table-hover tbl-custom mb-2 caption-top");
-    if (size) jq(table).addClass('table-sm');
+    if (size) jq(table).addClass("table-sm");
     if (!includeSerial) jq(table).removeClass("css-serial");
     if (fixTableHead) jq(thead).addClass("tbl-fixed");
   } else {
@@ -301,70 +327,87 @@ export function createTable({
 
   let tfoot = null;
   if (colsToTotal.length) {
-    tfoot = document.createElement('tfoot');
-    const tr = document.createElement('tr');
-    // create footer cells for each header key (same order)
+    tfoot = document.createElement("tfoot");
+    const tr = document.createElement("tr");
+
     for (const key of headerKeys) {
-      let td = document.createElement('td');
+      const td = document.createElement("td");
       td.dataset.key = key;
-      td.dataset.value = '';
+      td.dataset.value = "";
       tr.append(td);
     }
+
     tfoot.append(tr);
     table.append(tfoot);
 
-    // Only process columns that exist in headerKeys (ignore others)
-    colsToTotal.forEach(col => {
+    colsToTotal.forEach((col) => {
       if (!headerKeys.includes(col)) {
         console.warn(`createTableNew: col "${col}" not found in table headers — ignoring.`);
-        return; // skip this column
+        return;
       }
 
-      // Compute total defensively
       const total = data.reduce((sum, item) => {
-        // parseNumber should exist in your code; fall back to Number()
-        let v = typeof parseNumber === 'function' ? parseNumber(item[col]) : Number(item[col]);
-        // If parseNumber returned NaN or the value is undefined, treat as 0
+        let v =
+          typeof parseNumber === "function"
+            ? parseNumber(item[col])
+            : Number(item[col]);
         if (isNaN(v) || v === undefined || v === null) v = 0;
         return sum + v;
       }, 0);
 
-      // find footer cell and populate it
       if (typeof jq !== "undefined") {
         const $cell = jq(tfoot).find(`[data-key="${col}"]`);
         if ($cell.length === 0) {
-          // highly unlikely because of headerKeys check, but be defensive
           console.warn(`createTableNew: footer cell for "${col}" not found — skipping.`);
           return;
         }
         $cell[0].dataset.value = total;
-        $cell.addClass('fw-bold text-end').text(parseAs === 'currency' ? parseCurrency(total) : parseLocals(total));
-        jq(table).find(`[data-key="${col}"]`).addClass('text-end');
-        jq(tbody).find(`[data-key="${col}"]`).each(function (i, e) {
-          jq(this).text(parseLocals(this.textContent));
-        });
+        $cell
+          .addClass("fw-bold text-end")
+          .text(
+            parseAs === "currency"
+              ? parseCurrency(total)
+              : parseLocals(total)
+          );
+        jq(table).find(`[data-key="${col}"]`).addClass("text-end");
+        jq(tbody)
+          .find(`[data-key="${col}"]`)
+          .each(function () {
+            jq(this).text(parseLocals(this.textContent));
+          });
       } else {
-        // plain DOM fallback
         const footerCell = tfoot.querySelector(`[data-key="${col}"]`);
         if (!footerCell) {
           console.warn(`createTableNew: footer cell for "${col}" not found — skipping.`);
           return;
         }
         footerCell.dataset.value = total;
-        footerCell.classList.add('fw-bold', 'text-end');
-        footerCell.textContent = parseAs === 'currency' ? (typeof parseCurrency === 'function' ? parseCurrency(total) : total) : (typeof parseLocals === 'function' ? parseLocals(total) : total);
-        // make body cells text-end and format them if parseLocals exists
-        table.querySelectorAll(`[data-key="${col}"]`).forEach(td => td.classList.add('text-end'));
-        tbody.querySelectorAll(`[data-key="${col}"]`).forEach(td => {
-          if (typeof parseLocals === 'function') td.textContent = parseLocals(td.textContent);
-        });
+        footerCell.classList.add("fw-bold", "text-end");
+        footerCell.textContent =
+          parseAs === "currency"
+            ? typeof parseCurrency === "function"
+              ? parseCurrency(total)
+              : total
+            : typeof parseLocals === "function"
+              ? parseLocals(total)
+              : total;
+
+        table
+          .querySelectorAll(`[data-key="${col}"]`)
+          .forEach((td) => td.classList.add("text-end"));
+        tbody
+          .querySelectorAll(`[data-key="${col}"]`)
+          .forEach((td) => {
+            if (typeof parseLocals === "function")
+              td.textContent = parseLocals(td.textContent);
+          });
       }
     });
   }
 
-  // Return an object containing references to the created elements
   return { table, tbody, thead, tfoot, data };
 }
+
 
 /**
  * Apply width to multiple table columns using data-key attributes.
@@ -373,23 +416,23 @@ export function createTable({
  * @param {Array} configs - Array of { key: string, width: string|number }
  */
 export function setTableColumnWidths($table, configs = []) {
-    if (!$table || !$table.length) return;
+  if (!$table || !$table.length) return;
 
-    configs.forEach(cfg => {
-        const { key, width } = cfg;
-        if (!key || !width) return;
+  configs.forEach(cfg => {
+    const { key, width } = cfg;
+    if (!key || !width) return;
 
-        const $col = $table.find(`[data-key="${key}"]`);
-        if ($col.length === 0) return;
+    const $col = $table.find(`[data-key="${key}"]`);
+    if ($col.length === 0) return;
 
-        $col.each(function () {
-            // Convert number to px if needed
-            const w = typeof width === 'number' ? `${width}px` : width;
+    $col.each(function () {
+      // Convert number to px if needed
+      const w = typeof width === 'number' ? `${width}px` : width;
 
-            this.style.setProperty('width', w, 'important');
-            // this.style.setProperty('min-width', w, 'important'); // needed for table cells
-        });
+      this.style.setProperty('width', w, 'important');
+      // this.style.setProperty('min-width', w, 'important'); // needed for table cells
     });
+  });
 }
 
 

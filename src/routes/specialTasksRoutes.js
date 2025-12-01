@@ -4,7 +4,7 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
-import { createTask, getTask, listTasks, addCorrespondence, updateTask, deleteAttachment, deleteTask, getAttachment, getAttachmentThumbnail, updateCorrespondence, deleteCorrespondence  } from '../controllers/specialTasksController.js';
+import { createTask, getTask, listTasks, addCorrespondence, updateTask, deleteAttachment, deleteTask, getAttachment, getAttachmentThumbnail, updateCorrespondence, deleteCorrespondence } from '../controllers/specialTasksController.js';
 
 
 const log = console.log;
@@ -19,10 +19,12 @@ const storage = multer.diskStorage({
     cb(null, storagePath);
   },
   filename: (req, file, cb) => {
-    log(file);
     // produce unique filename: uuid + timestamp + original ext
     const ext = path.extname(file.originalname) || '';
-    const name = `${uuidv4()}${ext}`;
+    const inputString = uuidv4();
+    const uuidParts = inputString.split('-');
+    const lastSegmentOfUUID = uuidParts[uuidParts.length - 1];
+    const name = `${lastSegmentOfUUID}${ext}`;
     cb(null, name);
   }
 });

@@ -1,16 +1,18 @@
 <div class="container-fluid">
     <div class="row mt-2 py-2 align-items-center">
         <div class="col-12 col-xl-3 mb-3 mb-xl-0">
-            <a href="/auth/daily/tasks" class="fw-bold mb-0 fs-1 text-primary nav-link">DAILY TASKS</a>
-            <span class="text-secondary"> <?= user.fullname ?> </span>
+            <span class="mb-0 fs-3 text-primary">DAILY TASKS</span>
         </div>
 
         <div class="col-12 col-xl-9">
-            <div class="d-flex justify-content-between justify-content-xl-end align-items-center gap-2">
-                <button class="btn btn-primary viewReport">View Report</button>
+            <div class="d-flex justify-content-between justify-content-xl-end align-items-center gap-3">
+                <select name="" id="sYears" class="form-select" style="width: 150px;"></select>
+                <select name="" id="sMonth" class="form-select" style="width: 150px;"></select>
+
+                <button class="btn btn-primary viewReport">View (Late Report)</button>
                 <div class="btn-group">
                     <butotn class="btn btn-light last" title="Previous Date"><i class="bi bi-caret-left-fill"></i></butotn>
-                    <button class="btn btn-light next disabled" title="Next Date"><i class="bi bi-caret-right-fill"></i></button>
+                    <!-- <button class="btn btn-light next disabled" title="Next Date"><i class="bi bi-caret-right-fill"></i></button> -->
                 </div>
                 
                 <input type="date" name="" id="inputDate" class="form-control me-auto me-md-0" style="width: 180px;">
@@ -19,13 +21,10 @@
                 <select name="users" id="selectUser" class="form-select" style="width: 180px;"></select>
                 <? } ?>
 
-                <a href="/auth/dashboard" class="btn btn-bd-outline-primary border-2 px-md-4">DASHBOARD</a>
-                <a href="/auth/tasklist" class="btn btn-bd-primary px-md-4 border-2" title="Create Daily Task">TASKS LIST</a>
 
                 <? if(user.role !== 'user'){ ?>
                 <!-- <button class="btn btn-bd-primary px-md-4 border-2" id="createDailyTask" title="Create Daily Task"><i
                         class="bi bi-plus-lg"></i> TASK</button> -->
-                        <!-- <i class="bi bi-plus-lg"></i> -->
                 <? } ?>
             </div>
         </div>

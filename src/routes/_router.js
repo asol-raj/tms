@@ -15,7 +15,7 @@ import specialTasksRoutes from "./specialTasksRoutes.js";
 const router = express.Router();
 
 router.get('/', (req, res) => res.render('index', { hideNavbar: true, title: 'TMS' }));
-router.get('/login', redirectIfAuthenticated, (req, res) => res.render('login', { hideNavbar: true,  title: 'TMS Login' }));
+router.get('/login', redirectIfAuthenticated, (req, res) => res.render('login', { hideNavbar: true,  title: 'TMS Login'}));
 router.get('/admin/register', (req, res) => res.render('register', { hideNavbar: true,  title: 'TMS Signup' }));
 
 
@@ -30,6 +30,7 @@ router.get('/logout', (req, res) => {
         httpOnly: true,
         sameSite: 'lax'
     });
+    res.clearCookie('token');
 
     // Redirect user back to login page
     return res.redirect('/login');

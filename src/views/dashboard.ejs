@@ -2,59 +2,27 @@
 <div class="container-fluid">
     <div class="row mt-2 py-2 align-items-center">
         <div class="col-12 col-sm-3 mb-3 mb-sm-0 d-flex align-items-center gap-2">
-            <span class="fw-bold mb-0 fs-1 text-primary nav-link" title="Task Mamagement System">TMS</span>
-            <span class="text-secondary">
-                <?= user.fullname ?>
-            </span>
+            <div class="fs-3 text-primary">DASHBOARD</div> 
         </div>
 
         <div class="col-12 col-xl-9">
             <div class="d-flex justify-content-end align-items-center gap-3 gap-xl-5">
                 <input type="search" name="search" id="searchTask" placeholder="Search tasks..."
-                    class="form-control me-auto ms-xl-0" style="width: clamp(250px, 20vw, 450px);">
-
-                <a href="/auth/special/tasks" class="fs-1 text-success"><i class="bi bi-chat-right-text-fill"></i></a>
-
-                <button class="btn btn-bd-outline-sunset px-lg-5 border-2 position-relative" type="button"
+                    class="form-control ms-auto ms-xl-0" style="width: clamp(250px, 20vw, 450px);">
+                <!-- <button class="btn btn-bd-outline-sunset px-lg-5 border-2 position-relative" type="button"
                     data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">
                     <i class="bi bi-cup-hot-fill"></i> FEEDS
                     <span
                         class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success text-white"
                         id="newPosts"><span class="visually-hidden">unread messages</span>
                     </span>
-                </button>
-                <a href="/auth/daily/tasks" class="btn btn-bd-outline-primary px-xl-4 border-2 me-auto me-sm-0"
-                    title="View Daily Tasks List"><i class="bi bi-view-list"></i> DAILY TASKS</a>
+                </button> -->
                 <? if(user.role !== 'user'){ ?>
-                <button class="btn btn-bd-primary px-xl-5 create-task border-2" title="Create A New Task"><i
+                <button class="btn btn-bd-primary px-3 create-task border-2" title="Create A New Task"><i
                         class="bi bi-plus-lg"></i> TASK</button>
                 <? } ?>
 
-                <div class="dropdown">
-                    <div class="d-flex justify-content-center align-items-center dropdown-toggle"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="fs-2 user-avatar rounded-circle d-flex justify-content-center align-items-center"
-                            style="width: 34px; height: 34px; font-size: 0.9rem;">
-                            <i class="bi bi-person-fill"></i>
-                        </span>
-                    </div>
-
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><span class="dropdown-item" role="button" id="updateProfile">Profile</span></li>
-                        <li><span class="dropdown-item" role="button" id="changePwd">Change Password</span></li>
-                        <!-- <li><span class="dropdown-item disabled" role="button">Show Posts</span></li> -->
-                        <li><a class="dropdown-item" href="/auth/daily/tasks">Daily Tasks</a></li>
-
-                        <? if(user.role === 'admin'){ ?>
-                        <li><a class="dropdown-item" href="/auth/settings">Settings</a></li>
-                        <? } ?>
-
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item text-danger" href="/logout">Logout</a></li>
-                    </ul>
-                </div>
+                
             </div>
         </div>
     </div>
@@ -81,54 +49,6 @@
         </div>
         <!-- rgb(184, 255, 251) -->
         <!-- <div class="col-3 updates bg-light-subtle" id="rightSide"></div> -->
-    </div>
-</div>
-
-<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel" style="--bs-offcanvas-width: 500px;">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="offcanvasRightLabel">
-            Posts & Feeds
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body position-relative">
-        <div class="postsfeeds">
-            <!-- <div class="d-flex justify-content-between align-items-center position-relative">
-                <h4 class="mb-0">Posts & Feeds</h4>
-                <button class="btn-close" id="togglePosts" title="Hide Posts & Feeds"></button>
-            </div> -->
-
-            <div id="createPostContainer" class="posts my-3 p-3 border rounded-2 d-none">
-                <h5>Create a New Post</h5>
-                <hr class="my-3">
-
-                <!-- Note: I fixed the ID from 'creaetPost' to 'createPost' -->
-                <form id="createPost">
-                    <textarea name="post" id="postMsg" class="form-control mb-3" rows="4"
-                        placeholder="Post New Updates Here"></textarea>
-
-                    <!-- Button wrapper for side-by-side buttons -->
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary w-100">Post</button>
-                        <!-- This 'Cancel' button will also hide the form -->
-                        <button type="button" id="cancelPostBtn" class="btn btn-secondary w-100">Cancel</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- This is the 'view-posts' div from your other code -->
-            <div class="view-posts mt-4">
-                <!-- Your loaded posts will go here -->
-            </div>
-
-        </div>
-
-        <? if(user.role !== 'user'){ ?>
-        <button id="showPostFormBtn" class="btn btn-primary btn-lg rounded-circle position-absolute bottom-0 end-0 m-4"
-            type="button" title="Show Create New Post">
-            <i class="bi bi-plus-lg"></i>
-        </button>
-        <? } ?>
     </div>
 </div>
 

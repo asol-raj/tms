@@ -32,9 +32,10 @@ mark.highlight-mark {
 }
 
 .status-flyout-option:hover {
-    background-color: #eef4ff !important;
-    color: black !important;
-    font-weight: bold;
+    /* background-color: #eef4ff !important; */
+    /* color: black !important; */
+    font-weight: bolder;
+    /* padding: 20px; */
 }
 
 .status-flyout-option.selected {

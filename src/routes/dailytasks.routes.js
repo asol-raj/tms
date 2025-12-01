@@ -16,6 +16,8 @@ router.get('/:id', ctrl.getTask);
 router.post('/:id/complete', ctrl.completeTask);
 router.post('/:id/undo_complete', ctrl.undoComplete);
 
+router.post('/:id/remarks', ctrl.saveTaskRemarks);
+
 router.get('/today', ctrl.getTodayTasks); // ?date=YYYY-MM-DD optional
 router.get('/user/all', ctrl.listDailyTasksForAllUsers);
 router.get('/user/:user_id', ctrl.listTasksForUser);
