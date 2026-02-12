@@ -168,3 +168,6 @@ select st.*, cb.fullname as createdby_name, at.fullname as assignedto_names
 
 SELECT * FROM users_daily_task_completions;
 SELECT * FROM user_task_assignments;
+
+
+SELECT * from attendance;

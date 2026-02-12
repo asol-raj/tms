@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `email` VARCHAR(255) NOT NULL UNIQUE,
   `username` VARCHAR(255) NULL UNIQUE,
   `fullname` VARCHAR(100) NULL,
-  -- `initials` VARCHAR(25) NULL,
+  `initials` VARCHAR(25) NULL,
   `password_hash` VARCHAR(255) NOT NULL,
   `user_role` ENUM('admin','manager','user') NOT NULL DEFAULT 'user',
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
@@ -36,6 +36,10 @@ CREATE TABLE IF NOT EXISTS `users` (
   INDEX `idx_email` (`email`),
   INDEX `idx_role` (`user_role`)
 );
+
+
+
+-- ALTER Table users ADD COLUMN initials VARCHAR(25) DEFAULT NULL after fullname;
 
 -- ======================
 -- Table: user_profile (one-to-one with users)
@@ -70,8 +74,8 @@ CREATE TABLE IF NOT EXISTS `user_week_offs` (
 );
 
 -- Triggers for user_week_offs to enforce max 2 week-offs per user
-DROP TRIGGER IF EXISTS `trg_user_weekoffs_before_insert`;
-DROP TRIGGER IF EXISTS `trg_user_weekoffs_before_update`;
+-- DROP TRIGGER IF EXISTS `trg_user_weekoffs_before_insert`;
+-- DROP TRIGGER IF EXISTS `trg_user_weekoffs_before_update`;
 
 DELIMITER $$
 CREATE TRIGGER `trg_user_weekoffs_before_insert`
@@ -341,3 +345,42 @@ CREATE TABLE IF NOT EXISTS `special_task_attachments` (
 --   );
 
 SELECT MD5('3f82edb7-dce6-45ec-b715-11be2cbdb82d');
+
+-- 04-12-2025
+CREATE TABLE IF NOT EXISTS `attendance` (
+  `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `user_id` CHAR(36) NOT NULL,
+  `attendance_date` DATE NOT NULL, -- the date this record belongs to
+  `status` ENUM('present','absent','leave','holiday','weekoff') NOT NULL DEFAULT 'present',
+  `check_in` DATETIME NULL,   -- first check-in time (UTC or server time)
+  `check_out` DATETIME NULL,  -- last check-out time
+  `note` VARCHAR(255) NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY `ux_user_date` (`user_id`, `attendance_date`),
+  INDEX `idx_att_date` (`attendance_date`),
+  INDEX `idx_user` (`user_id`),
+  CONSTRAINT `fk_att_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+ALTER TABLE attendance
+MODIFY status ENUM(
+  'present',
+  'absent',
+  'leave',
+  'holiday',
+  'weekoff'
+) NOT NULL DEFAULT 'present';
+
+
+-- CREATE TABLE attendance (
+--     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+--     user_id BIGINT UNSIGNED NOT NULL,
+--     attendance_date DATE NOT NULL,
+--     status ENUM('P','A','L','W','H') DEFAULT NULL,
+--     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+--     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+--         ON UPDATE CURRENT_TIMESTAMP,
+--     UNIQUE KEY uq_user_date (user_id, attendance_date),
+--     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+-- );

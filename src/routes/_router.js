@@ -11,6 +11,7 @@ import userTaskAssignmentRoutes from "./userTaskAssignment.routes.js";
 import assignmentRoutes from "./assignment.routes.js";
 import dailyTaskRoutes from "./dailytasks.routes.js";
 import specialTasksRoutes from "./specialTasksRoutes.js";
+import attendanceRoutes from "./attendanceRoutes.js";
 
 const router = express.Router();
 
@@ -42,6 +43,7 @@ router.use("/auth/tasklist/assignments", userTaskAssignmentRoutes);
 router.use("/auth/assignments", assignmentRoutes);
 router.use("/auth/daily/tasks", dailyTaskRoutes);
 router.use("/auth/special/tasks", specialTasksRoutes);
+router.use("/auth/attendance", attendanceRoutes);
 
 router.get('/403', (req, res) => res.render('403', { title: 'Access Restricted' }))
 router.get('/auth/dashboard', (req, res) => res.render('dashboard', { title: 'TMS Dashboard', user: req.user }));

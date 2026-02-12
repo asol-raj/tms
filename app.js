@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 4004;
 
-ejs.delimiter = '?';
+ejs.delimiter = '?'; // Using <?= ?> style EJS delimiters (PHP-like)
 
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));

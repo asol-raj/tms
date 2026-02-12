@@ -1,9 +1,12 @@
 import createAdvanceForm from './_utils/advanceCreateFrom.js';
 import attachEditableControls from './_utils/flyoutmenu.js';
 import { applySearch } from './_utils/searchTools.js';
-import { addColumnBorders, advanceMysqlQuery, createFlyoutMenu, createTable, fetchData, hideTableColumns, initAdvancedTable, inlineEditBox, jq, log, postData, setTableColumnWidths, titleCaseTableHeaders, toTitleCase } from './help.js';
+import { addColumnBorders, advanceMysqlQuery, createFlyoutMenu, createTable, fetchData, hideTableColumns, initAdvancedTable, inlineEditBox, jq, log, postData, setTableColumnWidths, titleCaseTableHeaders, toTitleCase, createFilterDropdown } from './help.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    let dropDownFilter = createFilterDropdown();
+    jq('body').append(dropDownFilter);
+
     loadData();
 
     // jq('#searchCustomer').on('input', async (e) => {

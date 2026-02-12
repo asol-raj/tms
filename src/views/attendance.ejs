@@ -1,0 +1,318 @@
+<div class="container-fluid mt-3">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Employee Attendance Dashboard (Demo)</h5>
+            <input type="month" id="monthPicker" class="form-control w-auto">
+        </div>
+
+        <div class="card-body">
+
+            <div class="legend mb-3">
+                <strong>Legend:</strong>
+                <span class="P">P = Present</span>
+                <span class="A">A = Absent</span>
+                <span class="L">L = Leave</span>
+                <span class="W">W = Weekoff</span>
+                <span class="H">H = Holiday</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm text-center align-middle" id="attendanceTable">
+                    <thead">
+                        <tr id="dayNameRow">
+                            <th class="text-start">Day</th>
+                        </tr>
+                        <tr id="dateHeaderRow">
+                            <th class="text-start">Date</th>
+                        </tr>
+                        </thead>
+
+                        <tbody id="attendanceBody">
+                        </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<style>
+    html {
+        font-size: 90%;
+    }
+
+    body {
+        background: #f5f6f8;
+    }
+
+    .table-responsive {
+        max-height: 75vh;
+        overflow: auto;
+    }
+
+    /* Sticky header */
+    thead th {
+        position: sticky;
+        top: 0;
+        background: #ffffff;
+        z-index: 5;
+    }
+
+    /* Sticky first column (employee names) */
+    #attendanceTable th:first-child,
+    #attendanceTable td:first-child {
+        position: sticky;
+        left: 0;
+        background: #ffffff;
+        z-index: 6;
+        min-width: 180px;
+    }
+
+    /* Center dropdown nicely */
+    .attendance-select {
+        min-width: 65px;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    /* Color coding */
+    .status-P {
+        background-color: #d4edda !important;
+    }
+
+    .status-A {
+        background-color: #f8d7da !important;
+    }
+
+    .status-L {
+        background-color: #fff3cd !important;
+    }
+
+    .status-W {
+        background-color: #cbc7ff !important;
+    }
+
+    .status-H {
+        background-color: #effba0 !important;
+    }
+
+    .legend span {
+        padding: 6px 10px;
+        border-radius: 4px;
+        margin-right: 10px;
+        font-weight: 600;
+    }
+
+    .legend .P {
+        background: #d4edda;
+    }
+
+    .legend .A {
+        background: #f8d7da;
+    }
+
+    .legend .L {
+        background: #fff3cd;
+    }
+
+    .legend .W {
+        background: #cbc7ff;
+    }
+
+    .legend .H {
+        background: #effba0;
+    }
+
+    /* Highlight today column */
+    .today-highlight {
+        background-color: #e7f1ff !important;
+        font-weight: 700;
+    }
+
+    /* Stronger highlight for headers */
+    .today-header {
+        background-color: #cfe2ff !important;
+        font-weight: 800;
+    }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+    /* =========================================================
+       Attendance Status Mapping (UI <-> DB)
+       ========================================================= */
+    const dbToUi = {
+        present: 'P',
+        absent: 'A',
+        leave: 'L',
+        holiday: 'H',
+        weekoff: 'W'
+    };
+
+    const uiToDb = {
+        P: 'present',
+        A: 'absent',
+        L: 'leave',
+        H: 'holiday',
+        W: 'weekoff'
+    };
+
+    /* =========================================================
+       Globals
+       ========================================================= */
+    let users = [];
+
+    /* =========================================================
+       Helpers
+       ========================================================= */
+    function getDaysInMonth(year, month) {
+        return new Date(year, month, 0).getDate();
+    }
+
+    function getDayLetter(year, month, day) {
+        return new Date(year, month - 1, day)
+            .toLocaleDateString('en', { weekday: 'short' })[0];
+    }
+
+    function createDropdown() {
+        return $(`
+        <select class="form-select form-select-sm attendance-select">
+            <option value=""></option>
+            <option value="P">P</option>
+            <option value="A">A</option>
+            <option value="L">L</option>
+            <option value="H">H</option>
+            <option value="W">W</option>
+        </select>
+    `);
+    }
+
+    /* =========================================================
+       Load Users
+       ========================================================= */
+    async function loadUsers() {
+        const res = await fetch('/auth/attendance/api/users');
+        let data = await res.json();
+        users = data.data;
+    }
+
+    /* =========================================================
+       Render Headers
+       ========================================================= */
+    function renderHeaders(year, month) {
+        const days = getDaysInMonth(year, month);
+
+        $('#dayNameRow th:gt(0)').remove();
+        $('#dateHeaderRow th:gt(0)').remove();
+
+        for (let d = 1; d <= days; d++) {
+            $('#dayNameRow').append(`<th>${getDayLetter(year, month, d)}</th>`);
+            $('#dateHeaderRow').append(`<th data-day="${d}">${d}</th>`);
+        }
+    }
+
+    /* =========================================================
+       Render Table
+       ========================================================= */
+    function renderTable(year, month) {
+        const days = getDaysInMonth(year, month);
+        const $tbody = $('#attendanceBody');
+        $tbody.empty();
+
+        users.forEach(u => {
+            const $tr = $('<tr>');
+            $tr.append(`<th class="text-start">${u.fullname || u.username || u.email}</th>`);
+
+            for (let d = 1; d <= days; d++) {
+                const $td = $('<td>');
+                const $dd = createDropdown()
+                    .attr('data-userid', u.user_id)
+                    .attr('data-day', d);
+
+                $td.append($dd);
+                $tr.append($td);
+            }
+            $tbody.append($tr);
+        });
+    }
+
+    /* =========================================================
+       Load Monthly Attendance
+       ========================================================= */
+    async function loadAttendance(year, month) {
+        const ym = `${year}-${String(month).padStart(2, '0')}`;
+        const res = await fetch(`/auth/attendance/month?month=${ym}`);
+        const result = await res.json();
+        const data = result.data || {};
+
+        $('.attendance-select').each(function () {
+            const userId = $(this).data('userid');
+            const day = $(this).data('day');
+
+            if (data[userId] && data[userId][day]) {
+                const dbStatus = data[userId][day];
+                const uiStatus = dbToUi[dbStatus];
+
+                if (uiStatus) {
+                    $(this)
+                        .val(uiStatus)
+                        .addClass(`status-${uiStatus}`);
+                }
+            }
+        });
+    }
+
+    /* =========================================================
+       Save Attendance (UI -> DB)
+       ========================================================= */
+    $(document).on('change', '.attendance-select', function () {
+        const uiVal = $(this).val();
+        const dbVal = uiToDb[uiVal] || null;
+
+        $(this).removeClass('status-P status-A status-L status-H status-W');
+        if (uiVal) $(this).addClass(`status-${uiVal}`);
+
+        const userId = $(this).data('userid');
+        const day = $(this).data('day');
+        const month = $('#monthPicker').val();
+        const date = `${month}-${String(day).padStart(2, '0')}`;
+
+        fetch('/auth/attendance/mark', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: userId,
+                date,
+                status: dbVal
+            })
+        });
+    });
+
+    /* =========================================================
+       Month Change
+       ========================================================= */
+    $('#monthPicker').on('change', async function () {
+        const [year, month] = this.value.split('-').map(Number);
+
+        renderHeaders(year, month);
+        renderTable(year, month);
+        await loadAttendance(year, month);
+    });
+
+    /* =========================================================
+       Initial Load
+       ========================================================= */
+    $(async function () {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth() + 1;
+
+        $('#monthPicker').val(`${year}-${String(month).padStart(2, '0')}`);
+
+        await loadUsers();
+        renderHeaders(year, month);
+        renderTable(year, month);
+        await loadAttendance(year, month);
+    });
+</script>

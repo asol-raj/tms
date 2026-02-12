@@ -2403,3 +2403,28 @@ export function reorderColumns(data, order) {
     return reordered;
   });
 }
+
+
+export function createFilterDropdown() {
+  return `
+    <div id="filterDropdown"
+         class="position-absolute border bg-white p-2 rounded shadow small d-print-none"
+         style="display:none; z-index:1065; width:250px; max-height:300px;"
+         tabindex="-1">
+
+      <input type="text"
+             class="form-control form-control-sm mb-2 filterSearch" id="filterSearch"
+             placeholder="Search..." />
+
+      <div id="filterItems"
+           class="overflow-auto"
+           style="max-height:180px;"></div>
+
+      <div class="d-flex justify-content-between gap-1 mt-2">
+        <button class="btn btn-sm btn-outline-secondary me-auto" id="clearFilter">Clear</button>
+        <button class="btn btn-sm btn-outline-secondary" id="applyFilter">Apply</button>
+        <button class="btn btn-sm btn-outline-secondary" id="cancelFilter">Cancel</button>
+      </div>
+    </div>
+  `;
+}

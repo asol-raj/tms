@@ -1,5 +1,5 @@
 import formfields from './formfields.js';
-import { log, jq, advanceMysqlQuery, createFormSmart, fd2obj, postData, createTable, addColumnBorders, titleCaseTableHeaders, fetchData, toTitleCase, initAdvancedTable, createFlyoutMenu } from './help.js';
+import { log, jq, advanceMysqlQuery, createFormSmart, fd2obj, postData, createTable, addColumnBorders, titleCaseTableHeaders, fetchData, toTitleCase, initAdvancedTable, createFlyoutMenu, createFilterDropdown } from './help.js';
 import createForm from './_utils/createForm.esm.js';
 import showModal from './_utils/modal.js';
 import inlineEditAdvance from './_utils/inlineEditAdvance.js';
@@ -14,6 +14,9 @@ import createAdvanceForm from './_utils/advanceCreateFrom.js';
 
 
 document.addEventListener('DOMContentLoaded', async () => {
+    let dropDownFilter = createFilterDropdown();
+    jq('body').append(dropDownFilter);
+
     loadData();
     // loadPosts();
 
@@ -332,9 +335,10 @@ async function setTable(data) {
                 }
             })
         })
-
+        log(role)
         $tbody.find(`[data-key="remarks"]`).each(function (i, e) {
-            if (!data[i].assigned_to) return;
+            if (!data[i].assigned_to) return;  
+            if (role !== 'user') return;          
             jq(e).on('dblclick', () => {
                 let id = data[i].id;
                 addEditRemarks(id);
@@ -344,6 +348,7 @@ async function setTable(data) {
 
         $tbody.find(`[data-key="comments"]`).each(function (i, e) {
             if (!data[i].assigned_to) return;
+            if (role === 'user') return;
             jq(e).on('dblclick', () => {
                 let id = data[i].id;
                 addEditComments(id);

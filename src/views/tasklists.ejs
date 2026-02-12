@@ -23,18 +23,11 @@
 </div>
 <hr>
 <div class="container-fluid">
-    <div class="dataTable table-responsive max-vh-80" id="dataTable"></div>
+    <div class="dataTable table-responsive max-vh-70" id="dataTable"></div>
 </div>
 
-<div id="filterDropdown" class="position-absolute border bg-white p-2 rounded shadow small d-print-none"
-    style="display:none; z-index:1050; width:250px; max-height:300px;" tabindex="-1">
-    <input type="text" class="form-control form-control-sm mb-2" id="filterSearch" placeholder="Search..." />
-    <div id="filterItems" class="overflow-auto" style="max-height:180px;"></div>
-    <div class="d-flex justify-content-between gap-1 mt-2">
-        <button class="btn btn-sm btn-outline-secondary me-auto" id="clearFilter">Clear</button>
-        <button class="btn btn-sm btn-outline-secondary" id="applyFilter">Apply</button>
-        <button class="btn btn-sm btn-outline-secondary" id="cancelFilter">Cancel</button>
-    </div>
-</div>
+<style>
+    html { font-size: 85%; }
+</style>
 
 <script type="module" src="/js/tasklists.js"></script>

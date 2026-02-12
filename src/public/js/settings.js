@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', (e) => {
 
 async function loadData() {
     try {
-        let sql = "SELECT `id`, `username`, `fullname`, `email`, `user_role`, `is_active`, date_format(`created_at`, '%m-%d-%Y, %r') as `created_at` FROM `users` ORDER BY id"
+        let sql = "SELECT `id`, `username`, `fullname`, `initials`, `email`, `user_role`, `is_active`, date_format(`created_at`, '%m-%d-%Y, %r') as `created_at` FROM `users` ORDER BY id"
         let res = await advanceMysqlQuery({ key: 'na', qry: sql });
         if (!res.data || res.data.length === 0) {
             jq('div.dataTable').html(`

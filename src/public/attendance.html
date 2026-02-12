@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance Dashboard Demo</title>
+
+    <!-- Bootstrap & jQuery -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <style>
+        html {
+            font-size: 90%;
+        }
+
+        body {
+            background: #f5f6f8;
+        }
+
+        .table-responsive {
+            max-height: 75vh;
+            overflow: auto;
+        }
+
+        /* Sticky header */
+        thead th {
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 5;
+        }
+
+        /* Sticky first column (employee names) */
+        #attendanceTable th:first-child,
+        #attendanceTable td:first-child {
+            position: sticky;
+            left: 0;
+            background: #ffffff;
+            z-index: 6;
+            min-width: 180px;
+        }
+
+        /* Center dropdown nicely */
+        .attendance-select {
+            min-width: 65px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* Color coding */
+        .status-P {
+            background-color: #d4edda !important;
+        }
+
+        .status-A {
+            background-color: #f8d7da !important;
+        }
+
+        .status-L {
+            background-color: #fff3cd !important;
+        }
+
+        .status-W {
+            background-color: #d1ecf1 !important;
+        }
+
+        .legend span {
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-weight: 600;
+        }
+
+        .legend .P {
+            background: #d4edda;
+        }
+
+        .legend .A {
+            background: #f8d7da;
+        }
+
+        .legend .L {
+            background: #fff3cd;
+        }
+
+        .legend .W {
+            background: #d1ecf1;
+        }
+
+        /* Highlight today column */
+        .today-highlight {
+            background-color: #e7f1ff !important;
+            font-weight: 700;
+        }
+
+        /* Stronger highlight for headers */
+        .today-header {
+            background-color: #cfe2ff !important;
+            font-weight: 800;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container-fluid mt-3">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Employee Attendance Dashboard (Demo)</h5>
+                <input type="month" id="monthPicker" class="form-control w-auto">
+            </div>
+
+            <div class="card-body">
+
+                <div class="legend mb-3">
+                    <strong>Legend:</strong>
+                    <span class="P">P = Present</span>
+                    <span class="A">A = Absent</span>
+                    <span class="L">L = Leave</span>
+                    <span class="W">W = Weekoff</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm text-center align-middle" id="attendanceTable">
+                        <thead">
+                            <tr id="dayNameRow">
+                                <th class="text-start">Day</th>
+                            </tr>
+                            <tr id="dateHeaderRow">
+                                <th class="text-start">Date</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="attendanceBody">
+                            </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const employees = [
+            { id: 1, name: "Raj Shekhar" },
+            { id: 2, name: "Amit Kumar" },
+            { id: 3, name: "Neha Sharma" },
+            { id: 4, name: "Priya Singh" },
+            { id: 5, name: "Rohit Verma" },
+            { id: 6, name: "Anjali Mehta" },
+            { id: 7, name: "Vikram Das" }
+        ];
+
+        function getDaysInMonth(year, month) {
+            return new Date(year, month, 0).getDate();
+        }
+
+        function getDayName(year, month, day) {
+            const d = new Date(year, month - 1, day);
+            return d.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0);
+        }
+
+        // Create both header rows
+        function renderHeaders(year, month) {
+            const days = getDaysInMonth(year, month);
+
+            const $dayRow = $('#dayNameRow');
+            const $dateRow = $('#dateHeaderRow');
+
+            $dayRow.find('th:gt(0)').remove();
+            $dateRow.find('th:gt(0)').remove();
+
+            for (let d = 1; d <= days; d++) {
+                const dayLetter = getDayName(year, month, d);
+
+                $dayRow.append(`<th class="text-muted">${dayLetter}</th>`);
+                $dateRow.append(`<th class="date-col" data-day="${d}">${d}</th>`);
+            }
+        }
+
+        // Dropdown
+        function createDropdown() {
+            return $(`
+        <select class="form-select form-select-sm attendance-select">
+            <option value="">--</option>
+            <option value="P">P</option>
+            <option value="A">A</option>
+            <option value="L">L</option>
+            <option value="W">W</option>
+        </select>
+    `);
+        }
+
+        // Table
+        function renderTable(year, month) {
+            const days = getDaysInMonth(year, month);
+            const $tbody = $('#attendanceBody');
+            $tbody.empty();
+
+            employees.forEach(emp => {
+                const $tr = $('<tr>');
+                $tr.append(`<th class="text-start">${emp.name}</th>`);
+
+                for (let d = 1; d <= days; d++) {
+                    const $td = $('<td>');
+                    const $dd = createDropdown()
+                        .attr('data-empid', emp.id)
+                        .attr('data-day', d);
+
+                    $td.append($dd);
+                    $tr.append($td);
+                }
+
+                $tbody.append($tr);
+            });
+        }
+
+        // Color coding
+        $(document).on('change', '.attendance-select', function () {
+            const val = $(this).val();
+            $(this).removeClass('status-P status-A status-L status-W');
+            if (val) $(this).addClass(`status-${val}`);
+        });
+
+        // ⭐ Scroll to current day
+        function scrollToToday() {
+            const today = new Date().getDate();
+            const $container = $('.table-responsive');
+            const $todayHeader = $(`.date-col[data-day="${today}"]`);
+
+            if ($todayHeader.length) {
+                const containerWidth = $container.width();
+                const scrollLeft = $todayHeader.position().left
+                    + $container.scrollLeft()
+                    - (containerWidth / 2)
+                    + ($todayHeader.outerWidth() / 2);
+
+                $container.animate({ scrollLeft }, 600);
+            }
+        }
+
+        // Month change
+        $('#monthPicker').on('change', function () {
+            const [year, month] = this.value.split('-');
+            renderHeaders(year, parseInt(month));
+            renderTable(year, parseInt(month));
+
+            // setTimeout(scrollToToday, 200);
+            setTimeout(() => {
+                scrollToToday();
+                highlightTodayColumn(year, month);
+            }, 300);
+        });
+
+        // Initial load
+        $(function () {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+
+            $('#monthPicker').val(`${year}-${String(month).padStart(2, '0')}`);
+
+            renderHeaders(year, month);
+            renderTable(year, month);
+
+            // setTimeout(scrollToToday, 300);
+            setTimeout(() => {
+                scrollToToday();
+                highlightTodayColumn(year, month);
+            }, 300);
+        });
+
+        function highlightTodayColumn(year, month) {
+            const today = new Date();
+
+            // Only highlight if viewing current month/year
+            if (today.getFullYear() != year || (today.getMonth() + 1) != month) {
+                return;
+            }
+
+            const day = today.getDate();
+
+            // Highlight day name row
+            $(`#dayNameRow th:eq(${day})`).addClass('today-header');
+
+            // Highlight date row
+            $(`#dateHeaderRow th[data-day="${day}"]`).addClass('today-header');
+
+            // Highlight all body cells of this column
+            $('#attendanceBody tr').each(function () {
+                $(this).find(`td:eq(${day - 1})`).addClass('today-highlight');
+            });
+        }
+
+    </script>
+
+
+</body>
+
+</html>
